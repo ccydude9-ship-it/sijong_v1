@@ -1,0 +1,11 @@
+export type {Card,ClockTime,AnswerMap} from '../../domain/src/index';
+import type {Card,ClockTime,AnswerMap} from '../../domain/src/index';
+export type LessonPhase='preparing'|'active'|'ended';
+export type StudentMode='practice'|'practical'|'sharing';
+export type RosterItem={id:string;displayName:string;distinction:string};
+export type StudentProgress={studentId:string;revision:number;stage:'reading'|'ordering'|'completed';answers:AnswerMap;order:string[];completedAt:string|null;wrongTimeIds:string[];wrongOrderIds:string[]};
+export type PracticeQuestion={id:string;clock:ClockTime};
+export type StudentSnapshot={lessonId:string;phase:LessonPhase;phaseRevision:number;student:RosterItem;cards:Card[];progress:StudentProgress;practice:PracticeQuestion|null;solvedCount:number};
+export type StudentSummary={studentId:string;displayName:string;distinction:string;progressRevision:number;stage:StudentProgress['stage'];correctTimeCount:number;solvedCount:number;connected:boolean;completedAt:string|null};
+export type TeacherSnapshot={lessonId:string;phase:LessonPhase;phaseRevision:number;students:StudentSummary[]};
+export type Session={id:string;role:'teacher'|'classroom'|'student';lessonId:string|null;studentId:string|null;expiresAt:number};
