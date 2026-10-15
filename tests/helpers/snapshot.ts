@@ -1,0 +1,2 @@
+import type {StudentSnapshot} from '../../packages/contracts/src/index';import {makeValidCards} from './cards';
+export const makeSnapshot=():StudentSnapshot=>({lessonId:'lesson',phase:'active',phaseRevision:1,student:{id:'s1',displayName:'별이',distinction:''},cards:makeValidCards(),progress:{studentId:'s1',revision:0,stage:'reading',answers:{},order:makeValidCards().map(c=>c.id),completedAt:null,wrongTimeIds:[],wrongOrderIds:[]},practice:{id:'question',clock:{hour:3,minute:30}},solvedCount:0});
