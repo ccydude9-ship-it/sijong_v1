@@ -926,6 +926,332 @@
           background: white;
         }
       }
+
+      /* Portrait classroom cards and tablet overview. */
+      .avatar {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .student-photo-editor {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+      }
+      .student-photo-editor input {
+        max-width: 100%;
+      }
+      .edit-art {
+        height: 300px;
+        aspect-ratio: 2/3;
+        max-width: 100%;
+        margin: auto;
+      }
+      .timeline-card svg,
+      .timeline-card img {
+        height: 260px;
+        object-fit: contain;
+      }
+      .reward-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #faf8f1;
+        border: 2px solid #e8deca;
+        border-radius: 22px;
+        padding: 12px;
+        width: 100%;
+        min-height: 340px;
+        height: min(55vh, 460px);
+      }
+      .reward-card .artwork,
+      .reward-card svg {
+        height: calc(100% - 35px);
+        width: 100%;
+        object-fit: contain;
+      }
+      .reward-card small {
+        font-size: 14px;
+        margin-top: 8px;
+        color: #655a7f;
+      }
+      .practice-layout .reward-panel {
+        padding: 18px;
+      }
+      .reward-panel .correct {
+        margin: 12px 0;
+      }
+      .answer-summary {
+        width: 100%;
+        min-height: 48px;
+        border-radius: 12px;
+        background: #eee9fb;
+        color: #524293;
+        font-weight: 800;
+        font-size: 16px;
+        padding: 8px;
+      }
+      .answer-summary.wrong {
+        border: 3px solid #cf594d;
+        color: #9e3d35;
+      }
+      .answer-summary small {
+        display: block;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .answer-dialog {
+        border: 0;
+        border-radius: 26px;
+        padding: 24px;
+        max-width: calc(100vw - 28px);
+        width: 640px;
+        max-height: calc(100svh - 30px);
+        overflow: auto;
+        color: var(--ink);
+      }
+      .answer-dialog::backdrop {
+        background: #191a38aa;
+      }
+      .answer-dialog h2 {
+        font-size: 23px;
+        margin-bottom: 18px;
+      }
+      .answer-dialog-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 24px;
+        align-items: center;
+      }
+      .answer-dialog .actions {
+        margin-top: 20px;
+      }
+      .practical-page .top {
+        margin-bottom: 10px;
+      }
+      .practical-page .heading {
+        margin: 8px 0 14px;
+      }
+      .practical-page .heading h1 {
+        font-size: 28px;
+        margin-bottom: 5px;
+      }
+      .practical-page .heading .eyebrow {
+        display: none;
+      }
+      .practical-page .heading p {
+        font-size: 14px;
+      }
+      .practical-page .actions {
+        margin-top: 12px;
+      }
+      .practical-page .notice {
+        margin: 8px 0;
+        padding: 8px 14px;
+      }
+      .reading-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .reading-card {
+        padding: 10px;
+        border-radius: 18px;
+        box-shadow: 0 3px 0 #25294510;
+      }
+      .card-top {
+        margin-bottom: 6px;
+        gap: 5px;
+        min-height: 30px;
+      }
+      .card-top h2 {
+        font-size: 14px;
+        line-height: 1.25;
+      }
+      .period {
+        font-size: 10px;
+        padding: 3px 7px;
+      }
+      .picture-button {
+        height: clamp(130px, 22vh, 210px);
+        width: auto;
+        aspect-ratio: 2/3;
+        max-width: 100%;
+        margin: 0 auto 8px;
+        border-radius: 10px;
+      }
+      .picture-button svg,
+      .picture-button .clock {
+        width: 100%;
+        height: 100%;
+        max-height: none;
+      }
+      .picture-button img {
+        object-fit: contain;
+      }
+      .flip-hint {
+        font-size: 9px;
+        bottom: 4px;
+        right: 4px;
+        padding: 2px 5px;
+      }
+      .order-list {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        max-width: none;
+      }
+      .order-card {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        padding: 10px;
+        position: relative;
+        min-width: 0;
+        border-radius: 18px;
+      }
+      .order-number {
+        position: absolute;
+        top: 6px;
+        left: 9px;
+        font-size: 17px;
+        background: #ffffffdd;
+        border-radius: 10px;
+        padding: 0 5px;
+      }
+      .order-card svg,
+      .order-card img {
+        width: 100%;
+        height: clamp(115px, 19vh, 180px);
+        object-fit: contain;
+        background: transparent;
+      }
+      .order-info {
+        min-width: 0;
+        text-align: center;
+        width: 100%;
+        min-height: 45px;
+      }
+      .order-info strong {
+        font-size: 14px;
+        line-height: 1.25;
+      }
+      .order-info small {
+        font-size: 12px;
+      }
+      .order-controls {
+        margin: 0;
+        gap: 10px;
+      }
+      .move {
+        min-height: 48px;
+        min-width: 58px;
+      }
+      @media (min-width: 700px) {
+        .practical-page {
+          padding: 14px 20px 10px;
+          max-width: 1200px;
+        }
+        .practice-layout {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 699px) {
+        .reading-grid,
+        .order-list {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .picture-button {
+          height: 190px;
+        }
+        .answer-dialog-grid {
+          grid-template-columns: 1fr;
+        }
+        .answer-dialog .clock {
+          max-height: 170px;
+        }
+        .practice-layout {
+          grid-template-columns: 1fr;
+        }
+        .timeline-card img,
+        .timeline-card svg {
+          height: 220px;
+        }
+      }
+
+      .reading-card {
+        padding: 8px;
+      }
+      .reading-card .card-top {
+        min-height: 25px;
+      }
+      .picture-button {
+        height: clamp(124px, 20vh, 190px);
+      }
+      .answer-summary {
+        padding: 6px;
+      }
+      .answer-summary small {
+        display: none;
+      }
+      .answer-summary.wrong small {
+        display: block;
+      }
+      .practice-page {
+        padding: 14px 24px 20px;
+      }
+      .practice-page .top {
+        margin-bottom: 10px;
+      }
+      .practice-page .heading {
+        margin: 10px 0 18px;
+      }
+      .practice-page .heading h1 {
+        font-size: 30px;
+        margin-bottom: 7px;
+      }
+      .practice-page .heading .eyebrow {
+        display: none;
+      }
+      .practice-page .heading p {
+        font-size: 14px;
+      }
+      .practice-page .reward-card {
+        height: clamp(310px, 43vh, 390px);
+        min-height: 310px;
+      }
+      .practice-page .reward-panel .correct {
+        margin: 6px 0;
+        font-size: 22px;
+      }
+      .practice-page .reward-panel .actions {
+        margin-top: 8px;
+      }
+      .practice-page .reward-panel .stat {
+        display: inline-block;
+        margin: 12px 8px 0 0;
+        font-size: 12px;
+      }
+      .practice-page .reward-panel > .ghost {
+        padding: 6px;
+        min-height: 40px;
+        font-size: 13px;
+      }
+      @media (max-width: 699px) {
+        .picture-button {
+          height: 190px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -987,7 +1313,14 @@
                 image: '',
                 scene: j,
               }));
-              return { id: 's' + i, name, distinction: '', cards, progress: freshProgress(cards) };
+              return {
+                id: 's' + i,
+                name,
+                distinction: '',
+                photo: '',
+                cards,
+                progress: freshProgress(cards),
+              };
             }),
           };
         }
@@ -1015,6 +1348,9 @@
                 typeof s.name !== 'string' ||
                 !s.name.trim() ||
                 s.name.length > 30 ||
+                (s.photo !== undefined &&
+                  (typeof s.photo !== 'string' ||
+                    (s.photo !== '' && !/^data:image\/(png|jpeg|webp);base64,/i.test(s.photo)))) ||
                 typeof s.distinction !== 'string' ||
                 s.distinction.length > 20 ||
                 !Array.isArray(s.cards) ||
@@ -1077,6 +1413,8 @@
                 q === null ||
                 (!!q &&
                   validTime(q) &&
+                  (q.cardId === undefined || hasCard(q.cardId)) &&
+                  (q.dismissed === undefined || typeof q.dismissed === 'boolean') &&
                   (q.answer === null || validTime(q.answer)) &&
                   typeof q.correct === 'boolean' &&
                   ['none', 'minute', 'zoom'].includes(q.hint))
@@ -1099,7 +1437,8 @@
           storageError =
             '이 브라우저에서는 자동 저장을 사용할 수 없어요. 파일을 닫기 전에 선생님 화면에서 자료를 내보내 주세요.';
         }
-        let screen = 'title',
+        let editingCardId = '',
+          screen = 'title',
           studentId = '',
           message = '',
           messageKind = '',
@@ -1152,7 +1491,17 @@
           );
         }
         function page(body) {
-          return '<main class="page">' + body + '</main>';
+          return (
+            '<main class="page ' +
+            (screen === 'practical'
+              ? 'practical-page'
+              : screen === 'practice'
+                ? 'practice-page'
+                : '') +
+            '">' +
+            body +
+            '</main>'
+          );
         }
         function heading(eye, title, text) {
           return (
@@ -1304,6 +1653,13 @@
         function renderTitle() {
           return '<main class="title-page"><div class="arcade-label">TICK TOCK · MY LITTLE DAY</div><button class="title-start" data-action="start" aria-label="게임 시작"><div class="mascot-clock" aria-hidden="true"></div><h1><span>시계는 째깍!</span> <span>하루는 찰칵!</span></h1><div class="press">PRESS ANY BUTTON</div><div class="title-caption">게임을 시작하려면 아무 버튼이나 누르세요</div></button><div class="title-footer"><span class="subtle" style="color:#b3afd0">나만의 하루를 만드는 시간 여행</span><button class="ghost" data-action="teacher">선생님 준비</button></div></main>';
         }
+        function avatar(s, i) {
+          return (
+            '<span class="avatar" aria-hidden="true">' +
+            (s.photo ? '<img src="' + esc(s.photo) + '" alt="">' : badges[i]) +
+            '</span>'
+          );
+        }
         function renderNames() {
           return page(
             '<div class="top"><span class="brand">◷ 째깍! 찰칵!</span><button class="ghost" data-action="title">시작 화면으로</button></div>' +
@@ -1322,9 +1678,9 @@
                     esc(s.id) +
                     '" aria-label="' +
                     esc(label(s)) +
-                    '"><span class="avatar" aria-hidden="true">' +
-                    badges[i] +
-                    '</span><span class="name-text">' +
+                    '">' +
+                    avatar(s, i) +
+                    '<span class="name-text">' +
                     esc(label(s)) +
                     '</span></button>',
                 )
@@ -1393,12 +1749,16 @@
           );
         }
         function newQuestion() {
+          const cards = student().cards,
+            card = cards[Math.floor(Math.random() * cards.length)];
           return {
-            hour: 1 + Math.floor(Math.random() * 12),
-            minute: Math.random() < 0.5 ? 0 : 30,
+            hour: Math.floor(card.minute / 60) % 12 || 12,
+            minute: card.minute % 60,
+            cardId: card.id,
             answer: null,
             hint: 'none',
             correct: false,
+            dismissed: false,
           };
         }
         function ended() {
@@ -1411,9 +1771,10 @@
             p = s.progress,
             q = p.practice;
           const match = q.correct
-            ? s.cards.find(
-                (c) =>
-                  (Math.floor(c.minute / 60) % 12 || 12) === q.hour && c.minute % 60 === q.minute,
+            ? s.cards.find((c) =>
+                q.cardId
+                  ? c.id === q.cardId
+                  : (Math.floor(c.minute / 60) % 12 || 12) === q.hour && c.minute % 60 === q.minute,
               )
             : null;
           return page(
@@ -1427,21 +1788,23 @@
               notice() +
               '<div class="practice-layout"><div class="panel clock-panel">' +
               clock(q.hour, q.minute, q.hint) +
-              '<div class="hint-actions"><button class="ghost" data-action="hint" data-value="minute">☀ 긴 바늘 보기</button><button class="ghost" data-action="hint" data-value="zoom">⌕ 크게 보기</button></div></div><div class="panel"><span class="eyebrow">시각을 골라요</span>' +
-              timeInput(
-                q.answer,
-                'practice',
-                'practice',
-                false,
-                q.correct || data.phase === 'ended',
-              ) +
+              '<div class="hint-actions"><button class="ghost" data-action="hint" data-value="minute">☀ 긴 바늘 보기</button><button class="ghost" data-action="hint" data-value="zoom">⌕ 크게 보기</button></div></div><div class="panel reward-panel">' +
+              (match && !q.dismissed
+                ? '<button class="reward-card" data-action="dismiss-card" aria-label="' +
+                  esc(match.title) +
+                  ' 일과 카드 닫기">' +
+                  art(match, data.students.indexOf(s)) +
+                  '<small>카드를 한 번 더 누르면 닫혀요</small></button>'
+                : '<span class="eyebrow">시각을 골라요</span>' +
+                  timeInput(
+                    q.answer,
+                    'practice',
+                    'practice',
+                    false,
+                    q.correct || data.phase === 'ended',
+                  )) +
               (q.correct
                 ? '<div class="correct">잘 읽었어요! ✦</div>' +
-                  (match
-                    ? '<div class="edit-art" style="margin:15px 0">' +
-                      art(match, data.students.indexOf(s)) +
-                      '</div>'
-                    : '') +
                   '<div class="actions"><button class="primary" data-action="next" ' +
                   (data.phase === 'ended' ? 'disabled' : '') +
                   '>다음 시계 만나기</button></div>'
@@ -1466,7 +1829,7 @@
               heading(
                 '실전모드 · MY DAILY CARDS',
                 '착착! 시각을 읽어요',
-                '카드를 눌러 시계를 만나고, 바늘이 가리키는 시각을 골라요.',
+                '카드 아래 시각을 눌러 답을 골라요. 위에 4장, 아래에 4장이에요.',
               ) +
               notice() +
               '<div class="reading-grid">' +
@@ -1490,13 +1853,22 @@
                     '<span class="flip-hint">' +
                     (p.flipped[c.id] ? '그림 보기 ↻' : '시계 보기 ↻') +
                     '</span></button>' +
-                    timeInput(
-                      p.answers[c.id],
-                      'reading',
-                      c.id,
-                      p.wrong.includes(c.id),
-                      data.phase === 'ended',
-                    ) +
+                    '<button class="answer-summary ' +
+                    (p.wrong.includes(c.id) ? 'wrong' : '') +
+                    '" data-action="open-answer" data-id="' +
+                    esc(c.id) +
+                    '" aria-label="' +
+                    esc(c.title) +
+                    ' 시각 고르기">' +
+                    (p.answers[c.id]
+                      ? p.answers[c.id].hour +
+                        '시 ' +
+                        String(p.answers[c.id].minute).padStart(2, '0') +
+                        '분'
+                      : '?시 ??분') +
+                    '<small>' +
+                    (p.wrong.includes(c.id) ? '다시 읽어 보세요' : '눌러서 시각 고르기') +
+                    '</small></button>' +
                     '</article>',
                 )
                 .join('') +
@@ -1544,13 +1916,13 @@
                     esc(c.title) +
                     ' 앞으로" ' +
                     (i === 0 || data.phase === 'ended' ? 'disabled' : '') +
-                    '>↑</button><button class="move" data-action="move" data-id="' +
+                    '>←</button><button class="move" data-action="move" data-id="' +
                     esc(id) +
                     '" data-direction="1" aria-label="' +
                     esc(c.title) +
                     ' 뒤로" ' +
                     (i === 7 || data.phase === 'ended' ? 'disabled' : '') +
-                    '>↓</button></div></article>'
+                    '>→</button></div></article>'
                   );
                 })
                 .join('') +
@@ -1668,11 +2040,16 @@
                     '</button>',
                 )
                 .join('') +
-              '</div><section class="panel"><div class="form-row"><label>학생 이름<input aria-label="학생 이름" data-field="name" value="' +
+              '</div><section class="panel"><div class="student-photo-editor">' +
+              avatar(
+                t,
+                data.students.findIndex((s) => s.id === t.id),
+              ) +
+              '<label>학생 사진<input type="file" aria-label="학생 사진" data-photo="true" accept="image/png,image/jpeg,image/webp"></label><button class="ghost" data-action="remove-photo">사진 지우기</button></div><div class="form-row"><label>학생 이름<input aria-label="학생 이름" data-field="name" value="' +
               esc(t.name) +
               '" maxlength="30"></label><label>같은 이름 구별하기<input aria-label="같은 이름 구별하기" data-field="distinction" value="' +
               esc(t.distinction) +
-              '" maxlength="20" placeholder="예: 꽃, 별"></label></div><p class="subtle">카드 8장의 그림·이름·시각을 바꿔 주세요. 첫 카드는 일어나기, 마지막 카드는 잠자기예요. 저장하면 이 학생의 실전 진행은 처음부터 시작합니다.</p><div class="editor-grid">' +
+              '" maxlength="20" placeholder="예: 꽃, 별"></label></div><p class="subtle">캔바에서 카드를 PNG로 내려받아 각 카드의 그림 바꾸기에 넣어 주세요. 세로 카드 전체가 잘리지 않게 표시됩니다. 카드에 적힌 시각과 아래 시각을 같게 맞춰 주세요. 첫 카드는 일어나기, 마지막 카드는 잠자기예요. 저장하면 이 학생의 실전 진행은 처음부터 시작합니다.</p><div class="editor-grid">' +
               t.cards
                 .map(
                   (c, i) =>
@@ -1769,10 +2146,44 @@
             screen = 'names';
             html = renderNames();
           }
+          if (screen === 'practical' && editingCardId && student().progress.stage === 'reading') {
+            const c = student().cards.find((c) => c.id === editingCardId),
+              p = student().progress;
+            html +=
+              '<dialog class="answer-dialog" aria-label="' +
+              esc(c.title) +
+              ' 시각 입력"><h2>' +
+              esc(c.title) +
+              ' · ' +
+              (c.minute < 720 ? '오전' : '오후') +
+              '</h2><div class="answer-dialog-grid">' +
+              clock(Math.floor(c.minute / 60) % 12 || 12, c.minute % 60) +
+              timeInput(
+                p.answers[c.id],
+                'reading',
+                c.id,
+                p.wrong.includes(c.id),
+                data.phase === 'ended',
+              ) +
+              '</div><div class="actions"><button class="primary" data-action="close-answer">입력 완료</button></div></dialog>';
+          }
           root.innerHTML = html;
+          if (uploading && screen === 'teacher') {
+            root.querySelectorAll('button, input, select').forEach((control) => {
+              control.disabled = true;
+            });
+          }
+          const dialog = root.querySelector('dialog');
+          if (dialog) {
+            dialog.addEventListener('cancel', () => {
+              editingCardId = '';
+            });
+            dialog.showModal();
+          }
           status();
         }
         function navigate(next) {
+          editingCardId = '';
           screen = next;
           message = '';
           messageKind = '';
@@ -1888,6 +2299,7 @@
             return;
           }
           if (button.disabled) return;
+          if (uploading && screen === 'teacher') return;
           const action = button.dataset.action,
             id = button.dataset.id,
             s = student(),
@@ -1910,7 +2322,16 @@
             return;
           }
           if (action === 'mode') {
-            if (button.dataset.mode === 'practice' && !p.practice) {
+            if (
+              button.dataset.mode === 'practice' &&
+              (!p.practice ||
+                !s.cards.some(
+                  (c) =>
+                    c.id === p.practice.cardId &&
+                    (Math.floor(c.minute / 60) % 12 || 12) === p.practice.hour &&
+                    c.minute % 60 === p.practice.minute,
+                ))
+            ) {
               p.practice = newQuestion();
               saveProgress();
             }
@@ -1936,6 +2357,28 @@
           if (action === 'teacher-discard') {
             setTeacher(teacherId);
             navigate('teacher');
+            return;
+          }
+          if (action === 'remove-photo') {
+            teacherDraft.photo = '';
+            markTeacherDirty();
+            render();
+            return;
+          }
+          if (action === 'open-answer') {
+            editingCardId = id;
+            render();
+            return;
+          }
+          if (action === 'close-answer') {
+            editingCardId = '';
+            render();
+            return;
+          }
+          if (action === 'dismiss-card') {
+            p.practice.dismissed = true;
+            saveProgress();
+            render();
             return;
           }
           if (action === 'teacher-save') {
@@ -2050,7 +2493,9 @@
               p.solved++;
               saveProgress();
               play();
-              feedback('맞았어요! 정말 잘 읽었어요.', 'success');
+              message = '';
+              messageKind = '';
+              render();
             } else feedback('다시 한번 읽어 볼까요? 힌트를 눌러도 좋아요.');
             return;
           }
@@ -2158,7 +2603,8 @@
             return;
           }
           if (screen !== 'teacher') return;
-          const index = Number(input.dataset.card),
+          const isPhoto = input.hasAttribute('data-photo'),
+            index = Number(input.dataset.card),
             c = teacherDraft.cards[index];
           if (input.type === 'file') {
             const file = input.files?.[0];
@@ -2185,7 +2631,10 @@
                 reader.onerror = () => reject(Error('그림 파일을 읽지 못했어요.'));
                 reader.readAsDataURL(file);
               });
-              const ratio = Math.min(1, 480 / Math.max(image.width, image.height)),
+              const ratio = Math.min(
+                  1,
+                  (isPhoto ? 320 : 960) / Math.max(image.width, image.height),
+                ),
                 canvas = document.createElement('canvas');
               canvas.width = Math.max(1, Math.round(image.width * ratio));
               canvas.height = Math.max(1, Math.round(image.height * ratio));
@@ -2193,9 +2642,12 @@
               ctx.fillStyle = '#fff';
               ctx.fillRect(0, 0, canvas.width, canvas.height);
               ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-              c.image = canvas.toDataURL('image/jpeg', 0.8);
+              if (isPhoto) teacherDraft.photo = canvas.toDataURL('image/jpeg', 0.85);
+              else c.image = canvas.toDataURL('image/jpeg', 0.85);
               teacherDirty = true;
-              message = '그림을 바꿨어요. 이 학생 저장을 눌러 주세요.';
+              message = isPhoto
+                ? '학생 사진을 바꿨어요. 이 학생 저장을 눌러 주세요.'
+                : '그림을 바꿨어요. 이 학생 저장을 눌러 주세요.';
               messageKind = 'success';
             } catch (err) {
               message = err.message;

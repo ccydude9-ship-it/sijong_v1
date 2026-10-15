@@ -43,23 +43,31 @@ test('personal reading drafts survive home reload and another student selection'
   await page.getByRole('button', { name: '별이', exact: true }).click();
   await page.getByRole('button', { name: /실전모드/ }).click();
   const first = page.locator('[data-reading-card]').first();
-  await first.getByRole('button', { name: '5시', exact: true }).click();
-  await first.getByRole('button', { name: '30분', exact: true }).click();
+  await first.getByRole('button', { name: /시각 고르기/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: '5시', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: '30분', exact: true }).click();
+  await page.getByRole('button', { name: '입력 완료' }).click();
   await page.getByRole('button', { name: '홈으로 돌아가기' }).click();
   await page.getByRole('button', { name: '이름 다시 고르기' }).click();
   await page.getByRole('button', { name: '하늘', exact: true }).click();
   await page.getByRole('button', { name: /실전모드/ }).click();
   await expect(page.getByRole('button', { name: '하늘의 일어나기 카드 뒤집기' })).toBeVisible();
   await expect(
-    page.locator('[data-reading-card]').first().getByRole('button', { name: '5시', exact: true }),
-  ).toHaveAttribute('aria-pressed', 'false');
+    page
+      .locator('[data-reading-card]')
+      .first()
+      .getByRole('button', { name: /시각 고르기/ }),
+  ).toContainText('?');
   await page.reload();
   await page.getByRole('button', { name: '게임 시작' }).click();
   await page.getByRole('button', { name: '별이', exact: true }).click();
   await page.getByRole('button', { name: /실전모드/ }).click();
   await expect(
-    page.locator('[data-reading-card]').first().getByRole('button', { name: '5시', exact: true }),
-  ).toHaveAttribute('aria-pressed', 'true');
+    page
+      .locator('[data-reading-card]')
+      .first()
+      .getByRole('button', { name: /시각 고르기/ }),
+  ).toContainText('5시 30분');
 });
 
 test('teacher changes names cards and pictures within the one file app', async ({ page }) => {
@@ -154,13 +162,27 @@ test('own cards can be read ordered and shared with serverless grading', async (
   ];
   for (let i = 0; i < 8; i++) {
     const card = page.locator('[data-reading-card]').nth(i);
-    await card.getByRole('button', { name: `${times[i][0]}시`, exact: true }).click();
-    await card
+    await card.getByRole('button', { name: /시각 고르기/ }).click();
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: `${times[i][0]}시`, exact: true })
+      .click();
+    await page
+      .getByRole('dialog')
       .getByRole('button', { name: `${String(times[i][1]).padStart(2, '0')}분`, exact: true })
       .click();
+    await page.getByRole('button', { name: '입력 완료' }).click();
   }
   await page.getByRole('button', { name: '시각 확인하기' }).click();
   await expect(page.getByRole('heading', { name: '내 하루를 순서대로!' })).toBeVisible();
+  const orderRows = await page.locator('[data-order-id]').evaluateAll((nodes) =>
+    nodes.map((node) => {
+      const box = node.getBoundingClientRect();
+      return { y: box.y, bottom: box.bottom };
+    }),
+  );
+  expect(new Set(orderRows.map((box) => Math.round(box.y))).size).toBe(2);
+  expect(Math.max(...orderRows.map((box) => box.bottom))).toBeLessThan(768);
   const correct = [
     '일어나기',
     '아침 먹기',
@@ -181,4 +203,103 @@ test('own cards can be read ordered and shared with serverless grading', async (
   await page.getByRole('button', { name: '내 하루 소개하기' }).click();
   await expect(page.getByRole('heading', { name: '찰칵! 내 하루를 들려줘' })).toBeVisible();
   await expect(page.locator('.timeline-card')).toHaveCount(8);
+});
+
+test('student photo is editable persistent and displayed as a round name avatar', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: '선생님 준비' }).click();
+  await page.getByLabel('학생 사진').setInputFiles({
+    name: 'face.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/h9sAAAAASUVORK5CYII=',
+      'base64',
+    ),
+  });
+  await expect(page.getByText('학생 사진을 바꿨어요. 이 학생 저장을 눌러 주세요.')).toBeVisible();
+  await page.getByRole('button', { name: '이 학생 저장' }).click();
+  await page.reload();
+  await page.getByRole('button', { name: '게임 시작' }).click();
+  const avatar = page.getByRole('button', { name: '별이', exact: true }).locator('img');
+  await expect(avatar).toHaveAttribute('src', /^data:image\/jpeg;base64,/);
+  expect(await avatar.locator('..').evaluate((el) => getComputedStyle(el).borderRadius)).toBe(
+    '50%',
+  );
+});
+
+test('correct practice reveals a large own card to the right and tapping dismisses it', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: '게임 시작' }).click();
+  await page.getByRole('button', { name: '별이', exact: true }).click();
+  await page.getByRole('button', { name: /연습모드/ }).click();
+  const q = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('sijong.single.v1')!).students[0].progress.practice,
+  );
+  expect(q.cardId).toBeTruthy();
+  await page.getByRole('button', { name: q.hour + '시', exact: true }).click();
+  await page
+    .getByRole('button', { name: String(q.minute).padStart(2, '0') + '분', exact: true })
+    .click();
+  await page.getByRole('button', { name: '정답 확인하기' }).click();
+  const reward = page.getByRole('button', { name: /일과 카드 닫기/ });
+  await expect(reward).toBeVisible();
+  const cardBox = await reward.boundingBox(),
+    clockBox = await page.locator('.clock-panel').boundingBox();
+  expect(cardBox!.x).toBeGreaterThan(clockBox!.x + clockBox!.width - 2);
+  expect(cardBox!.height).toBeGreaterThan(300);
+  await reward.click();
+  await expect(reward).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '다음 시계 만나기' })).toBeVisible();
+});
+
+test('tablet shows all eight portrait cards in two rows of four', async ({ page }) => {
+  await page.getByRole('button', { name: '게임 시작' }).click();
+  await page.getByRole('button', { name: '별이', exact: true }).click();
+  await page.getByRole('button', { name: /실전모드/ }).click();
+  for (const size of [
+    { width: 1024, height: 768 },
+    { width: 1180, height: 820 },
+  ]) {
+    await page.setViewportSize(size);
+    const boxes = await page.locator('[data-reading-card]').evaluateAll((nodes) =>
+      nodes.map((n) => {
+        const r = n.getBoundingClientRect();
+        return { x: r.x, y: r.y, bottom: r.bottom };
+      }),
+    );
+    expect(new Set(boxes.map((b) => Math.round(b.y))).size).toBe(2);
+    expect(boxes.slice(0, 4).every((b) => Math.abs(b.y - boxes[0].y) < 2)).toBe(true);
+    expect(Math.max(...boxes.map((b) => b.bottom))).toBeLessThan(size.height);
+    const picture = await page.locator('.picture-button').first().boundingBox();
+    expect(picture!.height).toBeGreaterThan(picture!.width);
+  }
+});
+
+test('older saved practice questions migrate to an actual personal card', async ({ page }) => {
+  await page.getByRole('button', { name: '게임 시작' }).click();
+  await page.getByRole('button', { name: '별이', exact: true }).click();
+  await page.getByRole('button', { name: /연습모드/ }).click();
+  await page.evaluate(() => {
+    const data = JSON.parse(localStorage.getItem('sijong.single.v1')!);
+    delete data.students[0].progress.practice.cardId;
+    data.students[0].progress.practice.hour = 2;
+    localStorage.setItem('sijong.single.v1', JSON.stringify(data));
+  });
+  await page.reload();
+  await page.getByRole('button', { name: '게임 시작' }).click();
+  await page.getByRole('button', { name: '별이', exact: true }).click();
+  await page.getByRole('button', { name: /연습모드/ }).click();
+  const matchesCard = await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('sijong.single.v1')!).students[0],
+      q = s.progress.practice;
+    return s.cards.some(
+      (c: { id: string; minute: number }) =>
+        c.id === q.cardId &&
+        (Math.floor(c.minute / 60) % 12 || 12) === q.hour &&
+        c.minute % 60 === q.minute,
+    );
+  });
+  expect(matchesCard).toBe(true);
 });
