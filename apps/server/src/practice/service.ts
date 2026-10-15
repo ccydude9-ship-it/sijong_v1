@@ -1,0 +1,8 @@
+import {randomInt,randomUUID} from 'node:crypto';import type {Store} from '../db';import type {Session,ClockTime,PracticeQuestion} from '../../../../packages/contracts/src/index';import {clockSchema} from '../../../../packages/contracts/src/index';import {matchPracticeCard} from '../../../../packages/domain/src/index';import {fail} from '../errors';
+export class PracticeService{
+ onCommit:(id:string)=>void=()=>{};
+ constructor(readonly store:Store,readonly pick:()=>number=()=>randomInt(24)){}
+ requireStudent(s:Session){if(s.role!=='student'||!s.studentId||this.store.students.get(s.studentId)?.lessonId!==s.lessonId)fail(403,'학생 접속이 필요합니다');if(this.store.lessons.get(s.lessonId!)?.phase!=='active')fail(409,'수업이 시작되었는지 확인해 주세요');return s.studentId;}
+ next(s:Session):PracticeQuestion{const studentId=this.requireStudent(s);const old=this.store.practice.list(studentId).find(p=>!p.solved);if(old)return {id:old.id,clock:old.clock};const n=this.pick(),clock:ClockTime={hour:Math.floor(n/2)+1,minute:n%2?30:0},id=randomUUID();this.store.practice.set({id,studentId,clock,solved:false});return {id,clock};}
+ check(s:Session,id:string,raw:ClockTime){const studentId=this.requireStudent(s),answer=clockSchema.parse(raw);const result=this.store.transaction(()=>{const q=this.store.practice.get(id);if(!q||q.studentId!==studentId)fail(403,'내 문제에 답해 주세요');const correct=q.solved||(q.clock.hour===answer.hour&&q.clock.minute===answer.minute);if(correct&&!q.solved)this.store.practice.set({...q,solved:true});return {correct,matchedCardId:correct?matchPracticeCard(this.store.students.cards(studentId),q.clock)?.id??null:null,solvedCount:this.store.practice.list(studentId).filter(p=>p.solved).length};});this.onCommit(s.lessonId!);return result;}
+}

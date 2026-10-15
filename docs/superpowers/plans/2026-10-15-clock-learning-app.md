@@ -115,11 +115,11 @@ expect(matchPracticeCard(amAndPmCards,{hour:7,minute:0})?.id).toBe('c1');
 
 **Interfaces:** `ImageService.upload(session:Session,studentId:string,bytes:Buffer):Promise<{imageId:string}>`, `open(session:Session,imageId:string):{path:string;mime:string}`, `attachToCard(lessonId:string,cardId:string,imageId:string):void`, `removeUnreferenced(lessonId:string):Promise<void>`. File writes use temporary files and atomic rename; repository references determine lifecycle.
 
-- [ ] **1. Failing tests:** `accepts_png_jpeg_webp`, `rejects_svg_html_and_spoofed_mime`, `rejects_over_2mb_or_4096_dimensions`, `strips_metadata`, `only_teacher_uploads_during_preparation`, `student_can_read_only_own_images`, `failed_attach_keeps_previous_image`, `deleting_copied_lesson_preserves_shared_image`. Assert pre-existing bytes/reference still exist after injected DB or filesystem error.
-- [ ] **2. Red:** `npm test -- tests/server/images.test.ts` fails on absent image service.
-- [ ] **3. Implement:** bound upload bytes before buffering, sharp input pixel limit before decode, verify actual decoded format, reencode metadata-free image, random filenames under configured private upload dir. IDs are lookup keys, never filesystem paths from requests. No static public upload folder. Clean unattached replacement on failure; orphan housekeeping cannot remove referenced images. Teacher deletion rejects active lesson and removes only unreferenced assets after DB commit.
-- [ ] **4. Green:** image suite and relevant lesson/auth suites pass; failed unauthenticated download returns no bytes.
-- [ ] **5. Commit:** `feat: upload and privately serve personal card artwork`.
+- [x] **1. Failing tests:** `accepts_png_jpeg_webp`, `rejects_svg_html_and_spoofed_mime`, `rejects_over_2mb_or_4096_dimensions`, `strips_metadata`, `only_teacher_uploads_during_preparation`, `student_can_read_only_own_images`, `failed_attach_keeps_previous_image`, `deleting_copied_lesson_preserves_shared_image`. Assert pre-existing bytes/reference still exist after injected DB or filesystem error.
+- [x] **2. Red:** `npm test -- tests/server/images.test.ts` fails on absent image service.
+- [x] **3. Implement:** bound upload bytes before buffering, sharp input pixel limit before decode, verify actual decoded format, reencode metadata-free image, random filenames under configured private upload dir. IDs are lookup keys, never filesystem paths from requests. No static public upload folder. Clean unattached replacement on failure; orphan housekeeping cannot remove referenced images. Teacher deletion rejects active lesson and removes only unreferenced assets after DB commit.
+- [x] **4. Green:** image suite and relevant lesson/auth suites pass; failed unauthenticated download returns no bytes.
+- [x] **5. Commit:** `feat: upload and privately serve personal card artwork`.
 
 ## Task 6: 무제한 연습 판정 API
 
