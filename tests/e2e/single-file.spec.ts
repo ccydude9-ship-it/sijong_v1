@@ -2,6 +2,8 @@ import { test, expect } from '@playwright/test';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+test.use({ actionTimeout: 10000 });
+
 const appFile = resolve('index.html');
 const appUrl = 'http://127.0.0.1:4179/index.html';
 test.beforeEach(async ({ page }) => {
@@ -28,7 +30,7 @@ test('single file opens offline and keeps title name and free mode navigation', 
   await expect(page.getByRole('heading', { name: '시계는 째깍! 하루는 찰칵!' })).toBeVisible();
   await page.keyboard.press('a');
   await page.getByRole('button', { name: '별이', exact: true }).click();
-  for (const mode of ['연습모드', '실전모드', '공유모드']) {
+  for (const mode of ['연습모드', '실전모드']) {
     await page.getByRole('button', { name: new RegExp(mode) }).click();
     await page.getByRole('button', { name: '홈으로 돌아가기' }).click();
     await expect(page.getByRole('heading', { name: '무엇을 해 볼까요?' })).toBeVisible();
@@ -113,7 +115,7 @@ test('practice gives retry hints and grades without a network service', async ({
   await page.getByRole('button', { name: `${(question.hour % 12) + 1}시`, exact: true }).click();
   await page.getByRole('button', { name: '정답 확인하기' }).click();
   await expect(page.getByRole('alert')).toContainText('다시 한번');
-  await page.getByRole('button', { name: /긴 바늘 보기/ }).click();
+  await page.getByRole('button', { name: /긴 바늘 따라가기/ }).click();
   await page.getByRole('button', { name: `${question.hour}시`, exact: true }).click();
   await page
     .getByRole('button', { name: `${String(question.minute).padStart(2, '0')}분`, exact: true })
@@ -146,9 +148,7 @@ test('import rejects malformed progress instead of rendering injected content', 
 test('own cards can be read ordered and shared with serverless grading', async ({ page }) => {
   await page.getByRole('button', { name: '게임 시작' }).click();
   await page.getByRole('button', { name: '별이', exact: true }).click();
-  await page.getByRole('button', { name: /공유모드/ }).click();
-  await expect(page.getByText('실전모드에서 일과표를 완성해 주세요')).toBeVisible();
-  await page.getByRole('button', { name: '홈으로 돌아가기' }).click();
+  await expect(page.getByRole('button', { name: /공유모드/ })).toHaveCount(0);
   await page.getByRole('button', { name: /실전모드/ }).click();
   const times = [
     [7, 0],
@@ -183,6 +183,8 @@ test('own cards can be read ordered and shared with serverless grading', async (
   );
   expect(new Set(orderRows.map((box) => Math.round(box.y))).size).toBe(2);
   expect(Math.max(...orderRows.map((box) => box.bottom))).toBeLessThan(768);
+  const finish = await page.getByRole('button', { name: '완성하기', exact: true }).boundingBox();
+  expect(finish!.y + finish!.height).toBeLessThan(768);
   const correct = [
     '일어나기',
     '아침 먹기',
@@ -194,15 +196,39 @@ test('own cards can be read ordered and shared with serverless grading', async (
     '잠자기',
   ];
   for (let target = 0; target < 8; target++) {
-    const up = page.getByRole('button', { name: `별이의 ${correct[target]} 앞으로`, exact: true });
-    while ((await up.locator('..').getAttribute('data-position')) !== String(target))
-      await up.click();
+    const card = page.getByRole('button', {
+      name: '별이의 ' + correct[target] + ' 카드 선택',
+      exact: true,
+    });
+    const index = await card.getAttribute('data-position');
+    if (index !== String(target)) {
+      await card.click();
+      await page
+        .getByRole('button', { name: target + 1 + '번째 자리에 놓기', exact: true })
+        .click();
+    }
   }
   await page.getByRole('button', { name: '완성하기', exact: true }).click();
   await expect(page.getByRole('heading', { name: '내 하루 완성!' })).toBeVisible();
-  await page.getByRole('button', { name: '내 하루 소개하기' }).click();
-  await expect(page.getByRole('heading', { name: '찰칵! 내 하루를 들려줘' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '완료 기록 내보내기' })).toBeVisible();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: '완료 기록 내보내기' }).click();
+  const download = await downloadPromise;
+  const exported = JSON.parse(readFileSync((await download.path())!, 'utf8'));
+  expect(exported.kind).toBe('sijong-student-result');
+  expect(exported.student.progress.stage).toBe('completed');
+  expect(exported.student.progress.order).toHaveLength(8);
+  await page.reload();
+  await page.getByRole('button', { name: '선생님 공유모드', exact: true }).click();
+  await page.getByRole('button', { name: '별이 일과표 보기', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '별이의 하루' })).toBeVisible();
   await expect(page.locator('.timeline-card')).toHaveCount(8);
+  const sharedBottom = await page
+    .locator('.timeline-card')
+    .last()
+    .evaluate((el) => el.getBoundingClientRect().bottom);
+  expect(sharedBottom).toBeLessThan(768);
+  await expect(page.getByRole('button', { name: '하늘 일과표 보기', exact: true })).toBeDisabled();
 });
 
 test('student photo is editable persistent and displayed as a round name avatar', async ({
@@ -302,4 +328,69 @@ test('older saved practice questions migrate to an actual personal card', async 
     );
   });
   expect(matchesCard).toBe(true);
+});
+
+test('hour hint highlights the interval without filling an answer and clocks match the blue card', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: '게임 시작' }).click();
+  await page.getByRole('button', { name: '별이', exact: true }).click();
+  await page.getByRole('button', { name: /연습모드/ }).click();
+  await expect(page.getByRole('button', { name: /크게 보기/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /짧은 바늘 사이 보기/ })).toBeVisible({
+    timeout: 1500,
+  });
+  await page.getByRole('button', { name: /짧은 바늘 사이 보기/ }).click();
+  await expect(page.locator('[data-hint="hour"]')).toBeVisible();
+  await expect(page.locator('.hint-explanation')).toContainText('짧은 바늘');
+  await expect(page.getByRole('button', { name: '정답 확인하기' })).toBeDisabled();
+  await expect(page.locator('.clock-face')).toHaveAttribute('stroke', '#2583ff');
+  await expect(page.locator('.clock-panel .paper-card')).toBeVisible();
+});
+
+test('teacher imports multiple tablet results without overwriting another student', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: '게임 시작' }).click();
+  await page.getByRole('button', { name: '별이', exact: true }).click();
+  await page.getByRole('button', { name: /연습모드/ }).click();
+  const students = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('sijong.single.v1')!).students,
+  );
+  const records = students.slice(0, 2).map((s: any) => {
+    s.progress.stage = 'completed';
+    s.progress.order = [...s.cards]
+      .sort((a: any, b: any) => a.minute - b.minute)
+      .map((c: any) => c.id);
+    s.progress.answers = Object.fromEntries(
+      s.cards.map((c: any) => [
+        c.id,
+        { hour: Math.floor(c.minute / 60) % 12 || 12, minute: c.minute % 60 },
+      ]),
+    );
+    return {
+      name: s.id + '.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(
+        JSON.stringify({ kind: 'sijong-student-result', version: 1, student: s }),
+      ),
+    };
+  });
+  await page.reload();
+  await expect(page.getByRole('button', { name: '선생님 공유모드', exact: true })).toBeVisible({
+    timeout: 1500,
+  });
+  await page.getByRole('button', { name: '선생님 공유모드', exact: true }).click();
+  await expect(page.getByLabel('완료 기록 불러오기')).toBeAttached();
+  page.on('dialog', (dialog) => dialog.accept());
+  await page.getByLabel('완료 기록 불러오기').setInputFiles(records);
+  await expect(page.getByRole('button', { name: '별이 일과표 보기', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: '하늘 일과표 보기', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: '별이 일과표 보기', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '별이의 하루' })).toBeVisible();
+  await page.getByRole('button', { name: '하늘 일과표 보기', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '하늘의 하루' })).toBeVisible();
+  expect(
+    await page.evaluate(() => JSON.parse(localStorage.getItem('sijong.single.v1')!).students[2]),
+  ).toEqual(students[2]);
 });

@@ -1252,6 +1252,423 @@
           height: 190px;
         }
       }
+
+      :root {
+        --card-blue: #2583ff;
+        --card-ratio: 7/10;
+      }
+      .mode-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        max-width: 820px;
+        margin: auto;
+      }
+      .title-footer {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .paper-card {
+        aspect-ratio: var(--card-ratio);
+        width: 100%;
+        height: 100%;
+        position: relative;
+        border: 1.5px solid var(--card-blue);
+        border-radius: 20px;
+        padding: 12px 10px;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        overflow: hidden;
+        isolation: isolate;
+      }
+      .paper-card:before {
+        content: '';
+        position: absolute;
+        inset: 5px;
+        border: 1px solid #a9ceff;
+        border-radius: 15px;
+        z-index: -1;
+      }
+      .paper-card .card-name {
+        display: block;
+        background: #def1ff;
+        color: #2474bc;
+        border: 1px solid #85baff;
+        border-radius: 2px;
+        text-align: center;
+        font-size: clamp(10px, 1.3vw, 17px);
+        font-weight: 900;
+        line-height: 1.4;
+        padding: 2px 3px;
+        flex-shrink: 0;
+      }
+      .paper-card .card-drawing {
+        min-height: 0;
+        flex: 1;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+      .paper-card .card-drawing svg,
+      .paper-card .card-drawing img {
+        height: 100%;
+        width: 100%;
+        object-fit: contain;
+        display: block;
+      }
+      .paper-card .card-caption {
+        border: 1px solid #85baff;
+        font-size: clamp(10px, 1.2vw, 16px);
+        font-weight: 800;
+        line-height: 1.3;
+        padding: 2px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      .paper-card .card-clock {
+        min-height: 0;
+        flex: 1;
+        display: flex;
+        align-items: center;
+      }
+      .paper-card .card-clock .clock {
+        width: 100%;
+        height: auto;
+        max-height: 100%;
+      }
+      .paper-card .clock-question {
+        color: #2474bc;
+        font-size: clamp(8px, 0.9vw, 12px);
+        font-weight: 800;
+        text-align: center;
+        margin: 3px 0 5px;
+      }
+      .paper-card.uploaded-card {
+        border: 0;
+        padding: 0;
+        border-radius: 0;
+      }
+      .paper-card.uploaded-card:before {
+        display: none;
+      }
+      .paper-card.uploaded-card > img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .picture-button {
+        aspect-ratio: var(--card-ratio);
+        overflow: visible;
+        background: transparent;
+      }
+      .picture-button .paper-card {
+        padding: 9px 7px;
+        border-radius: 14px;
+        gap: 4px;
+      }
+      .picture-button .paper-card:before {
+        inset: 3px;
+        border-radius: 11px;
+      }
+      .picture-button .card-name {
+        font-size: 9px;
+      }
+      .picture-button .card-caption {
+        font-size: 9px;
+      }
+      .picture-button .flip-hint {
+        background: #fff8;
+        bottom: 32px;
+      }
+      .clock-panel > .paper-card {
+        height: 330px;
+        width: 231px;
+        max-width: 100%;
+      }
+      .clock-panel {
+        align-content: center;
+        gap: 10px;
+      }
+      .hint-actions {
+        gap: 6px;
+        margin-top: 2px;
+      }
+      .hint-actions button {
+        font-size: 13px;
+        padding: 9px;
+        min-height: 48px;
+        border: 1px solid #c9ddfa;
+        border-radius: 12px;
+      }
+      .hint-actions button[aria-pressed='true'] {
+        background: #e0efff;
+        border-color: #2583ff;
+        color: #195d9c;
+      }
+      .hint-explanation {
+        max-width: 350px;
+        text-align: center;
+        min-height: 42px;
+        color: #486789;
+        font-size: 14px;
+        margin: 0;
+      }
+      .reward-card {
+        padding: 8px;
+      }
+      .reward-card .paper-card {
+        width: auto;
+        height: calc(100% - 30px);
+        max-width: 100%;
+        flex-shrink: 0;
+      }
+      .reward-card .paper-card .card-drawing svg {
+        height: 100%;
+      }
+      .answer-dialog .paper-card {
+        height: 300px;
+        width: 210px;
+        max-width: 100%;
+        margin: auto;
+      }
+      .order-card {
+        padding: 8px;
+        display: block;
+        position: relative;
+      }
+      .order-tile {
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        gap: 5px;
+        background: transparent;
+        width: 100%;
+        padding: 0;
+        border-radius: 12px;
+      }
+      .order-tile > .paper-card {
+        height: clamp(124px, 18vh, 170px);
+        width: auto;
+        flex-shrink: 0;
+      }
+      .order-card .order-number {
+        position: static;
+        font-size: 13px;
+        font-weight: 900;
+        min-height: 22px;
+        color: #586b87;
+        align-self: flex-start;
+      }
+      .order-card.selected {
+        border: 3px solid #2583ff;
+        background: #edf6ff;
+        padding: 6px;
+        box-shadow: 0 0 0 3px #2583ff22;
+      }
+      .order-card.target {
+        border: 2px dashed #6ea3e8;
+      }
+      .order-card .place-tag {
+        position: absolute;
+        top: 40%;
+        left: 8px;
+        right: 8px;
+        padding: 12px 4px;
+        background: #185aaee8;
+        border-radius: 12px;
+        color: white;
+        font-weight: 900;
+        font-size: 18px;
+        pointer-events: none;
+      }
+      .order-card .order-info {
+        min-height: 38px;
+      }
+      .order-card .order-info strong {
+        font-size: 12px;
+      }
+      .order-card .order-info small {
+        font-size: 11px;
+      }
+      .order-help {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        min-height: 40px;
+        color: #345c91;
+        font-size: 15px;
+        margin: -8px 0 8px;
+      }
+      .order-help .ghost {
+        font-size: 12px;
+        min-height: 36px;
+        padding: 6px 10px;
+      }
+      .teacher-gallery {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+        margin: 18px 0;
+      }
+      .gallery-student {
+        border: 2px solid #e1e6ef;
+        background: white;
+        padding: 12px 6px;
+        border-radius: 18px;
+        min-height: 114px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+      }
+      .gallery-student.selected {
+        border-color: #2583ff;
+        background: #edf6ff;
+      }
+      .gallery-student .avatar {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+      }
+      .gallery-student small {
+        font-size: 11px;
+        color: #68748a;
+      }
+      .gallery-student strong {
+        font-size: 15px;
+      }
+      .gallery-student:disabled {
+        opacity: 0.6;
+      }
+      .gallery-controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .teacher-share-page .heading {
+        margin: 12px 0;
+      }
+      .teacher-share-page .heading h1 {
+        font-size: 30px;
+      }
+      .teacher-share-page .heading .eyebrow {
+        display: none;
+      }
+      .teacher-share-page .timeline {
+        gap: 12px;
+      }
+      .timeline-card {
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .timeline-card > .paper-card {
+        height: 240px;
+        width: 168px;
+        max-width: 100%;
+        margin-top: 8px;
+      }
+      .timeline-card h2 {
+        font-size: 14px;
+        margin: 8px 0 0;
+      }
+      .result-import {
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+      }
+      @media (min-width: 700px) {
+        .teacher-share-page {
+          padding: 14px 20px;
+        }
+        .teacher-share-page .top {
+          margin-bottom: 10px;
+        }
+        .teacher-share-page .heading h1 {
+          font-size: 26px;
+          margin-bottom: 5px;
+        }
+        .teacher-share-page .heading p {
+          font-size: 14px;
+        }
+        .teacher-share-page .teacher-warning {
+          padding: 8px 12px;
+          margin: 8px 0;
+          font-size: 12px;
+        }
+        .teacher-share-page .teacher-gallery {
+          margin: 10px 0;
+        }
+        .teacher-share-page .gallery-student {
+          min-height: 84px;
+          padding: 6px;
+          gap: 2px;
+        }
+        .teacher-share-page .gallery-student .avatar {
+          width: 32px;
+          height: 32px;
+          font-size: 19px;
+        }
+        .teacher-share-page > h2 {
+          margin: 10px 0;
+          font-size: 22px;
+        }
+        .teacher-share-page .timeline-card {
+          padding: 6px;
+        }
+        .teacher-share-page .timeline-card > .paper-card {
+          height: clamp(124px, 18vh, 180px);
+          width: auto;
+          margin-top: 4px;
+        }
+        .teacher-share-page .timeline-card h2 {
+          margin-top: 4px;
+          font-size: 12px;
+        }
+        .teacher-share-page .timeline-time {
+          font-size: 13px;
+        }
+        .teacher-share-page .actions {
+          margin-top: 12px;
+        }
+      }
+      @media print {
+        .teacher-gallery,
+        .teacher-warning {
+          display: none;
+        }
+      }
+      @media (max-width: 699px) {
+        .mode-grid {
+          grid-template-columns: 1fr;
+        }
+        .teacher-gallery {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .clock-panel > .paper-card {
+          height: 300px;
+          width: 210px;
+        }
+        .order-tile > .paper-card {
+          height: 190px;
+        }
+        .timeline-card > .paper-card {
+          width: 100%;
+          height: auto;
+        }
+        .paper-card .card-name {
+          font-size: 12px;
+        }
+        .paper-card .card-caption {
+          font-size: 11px;
+        }
+        .order-help {
+          font-size: 13px;
+          flex-wrap: wrap;
+        }
+      }
     </style>
   </head>
   <body>
@@ -1417,7 +1834,7 @@
                   (q.dismissed === undefined || typeof q.dismissed === 'boolean') &&
                   (q.answer === null || validTime(q.answer)) &&
                   typeof q.correct === 'boolean' &&
-                  ['none', 'minute', 'zoom'].includes(q.hint))
+                  ['none', 'minute', 'hour', 'zoom'].includes(q.hint))
               );
             })
           );
@@ -1437,7 +1854,9 @@
           storageError =
             '이 브라우저에서는 자동 저장을 사용할 수 없어요. 파일을 닫기 전에 선생님 화면에서 자료를 내보내 주세요.';
         }
-        let editingCardId = '',
+        let selectedOrderId = '',
+          shareStudentId = '',
+          editingCardId = '',
           screen = 'title',
           studentId = '',
           message = '',
@@ -1446,7 +1865,6 @@
           teacherDraft = null,
           teacherDirty = false,
           uploading = false,
-          dragging = null,
           sound = false,
           audio = null;
         const student = () => data.students.find((s) => s.id === studentId);
@@ -1497,7 +1915,9 @@
               ? 'practical-page'
               : screen === 'practice'
                 ? 'practice-page'
-                : '') +
+                : screen === 'teacher-share'
+                  ? 'teacher-share-page'
+                  : '') +
             '">' +
             body +
             '</main>'
@@ -1517,51 +1937,97 @@
         function clock(hour, minute, hint = 'none') {
           const ha = (hour % 12) * 30 + minute * 0.5,
             ma = minute * 6;
-          let ticks = '',
-            numbers = '';
-          for (let i = 0; i < 60; i++) {
-            const a = (i * Math.PI) / 30,
-              r = i % 5 === 0 ? 80 : 86;
-            ticks +=
-              '<line x1="' +
-              (100 + Math.sin(a) * r) +
-              '" y1="' +
-              (100 - Math.cos(a) * r) +
-              '" x2="' +
-              (100 + Math.sin(a) * 91) +
-              '" y2="' +
-              (100 - Math.cos(a) * 91) +
-              '" stroke="#9c9aaa" stroke-width="' +
-              (i % 5 === 0 ? 2.8 : 1) +
-              '"/>';
+          const point = (angle, r) => [
+            100 + Math.sin((angle * Math.PI) / 180) * r,
+            100 - Math.cos((angle * Math.PI) / 180) * r,
+          ];
+          let numbers = '',
+            highlight = '';
+          if (hint === 'hour') {
+            if (minute === 0) {
+              const [x, y] = point((hour % 12) * 30, 78);
+              highlight =
+                '<circle data-hint="hour" cx="' + x + '" cy="' + y + '" r="13" fill="#d6eaff"/>';
+            } else {
+              const start = point((hour % 12) * 30, 89),
+                end = point(((hour % 12) + 1) * 30, 89);
+              highlight =
+                '<path data-hint="hour" d="M100 100 L' +
+                start.join(' ') +
+                ' A89 89 0 0 1 ' +
+                end.join(' ') +
+                ' Z" fill="#d6eaff"/>';
+            }
           }
+          if (hint === 'minute')
+            highlight =
+              '<g data-hint="minute"><circle cx="100" cy="22" r="13" fill="#ffedc8"/><circle cx="100" cy="178" r="13" fill="#ffedc8"/></g>';
           for (let i = 1; i <= 12; i++) {
-            const a = (i * Math.PI) / 6;
+            const [x, y] = point(i * 30, 78);
             numbers +=
               '<text x="' +
-              (100 + Math.sin(a) * 68) +
+              x +
               '" y="' +
-              (106 - Math.cos(a) * 68) +
-              '" text-anchor="middle" fill="#33364b" font-size="16" font-weight="800">' +
+              (y + 4) +
+              '" text-anchor="middle" fill="#222936" font-size="12" font-weight="500">' +
               i +
               '</text>';
           }
           return (
-            '<svg class="clock ' +
-            (hint === 'zoom' ? 'zoom' : '') +
-            '" viewBox="0 0 200 200" role="img" aria-label="바늘이 있는 아날로그 시계"><circle cx="100" cy="100" r="98" fill="#f9f5eb"/><circle cx="100" cy="100" r="93" fill="white" stroke="#d7d0e8" stroke-width="3"/>' +
-            ticks +
+            '<svg class="clock" viewBox="0 0 200 200" role="img" aria-label="바늘이 있는 아날로그 시계"><circle class="clock-face" cx="100" cy="100" r="97" fill="white" stroke="#2583ff" stroke-width="1.5"/>' +
+            highlight +
             numbers +
-            '<line x1="100" y1="105" x2="100" y2="57" stroke="#353953" stroke-width="8" stroke-linecap="round" transform="rotate(' +
+            '<line x1="100" y1="100" x2="100" y2="51" stroke="' +
+            (hint === 'hour' ? '#1971ce' : '#222936') +
+            '" stroke-width="5" stroke-linecap="round" transform="rotate(' +
             ha +
-            ' 100 100)"/><line x1="100" y1="110" x2="100" y2="26" stroke="' +
-            (hint === 'minute' ? '#e57548' : '#7460bb') +
-            '" stroke-width="' +
-            (hint === 'minute' ? 6 : 4) +
-            '" stroke-linecap="round" transform="rotate(' +
+            ' 100 100)"/>' +
+            '<line x1="100" y1="100" x2="100" y2="29" stroke="' +
+            (hint === 'minute' ? '#e68a21' : '#222936') +
+            '" stroke-width="2.8" stroke-linecap="round" transform="rotate(' +
             ma +
-            ' 100 100)"/><circle cx="100" cy="100" r="6" fill="#353953"/></svg>'
+            ' 100 100)"/>' +
+            '<circle cx="100" cy="100" r="4" fill="#222936"/></svg>'
           );
+        }
+        function cardFrame(s, contents, caption = '', back = false) {
+          return (
+            '<div class="paper-card ' +
+            (back ? 'clock-card' : '') +
+            '"><span class="card-name">' +
+            esc(s.name) +
+            '의 하루</span><div class="' +
+            (back ? 'card-clock' : 'card-drawing') +
+            '">' +
+            contents +
+            '</div>' +
+            (back
+              ? '<span class="clock-question">몇 시 몇 분일까요?</span>'
+              : '<span class="card-caption">' + esc(caption) + '</span>') +
+            '</div>'
+          );
+        }
+        function clockCard(s, hour, minute, hint = 'none') {
+          return cardFrame(s, clock(hour, minute, hint), '', true);
+        }
+        function frontCard(s, c) {
+          if (c.image)
+            return (
+              '<div class="paper-card uploaded-card">' + art(c, data.students.indexOf(s)) + '</div>'
+            );
+          return cardFrame(
+            s,
+            art(c, data.students.indexOf(s)),
+            c.title.replace(s.name + '의 ', ''),
+          );
+        }
+        function hintText(q) {
+          if (q.hint === 'minute') return '긴 바늘이 12를 가리키면 00분, 6을 가리키면 30분이에요.';
+          if (q.hint === 'hour')
+            return q.minute === 0
+              ? '짧은 바늘이 가리키는 숫자가 몇 시인지 살펴봐요.'
+              : '짧은 바늘이 두 숫자 사이에 있으면, 이미 지나온 숫자를 읽어요.';
+          return '바늘이 헷갈리면 아래 도움말을 눌러 보세요.';
         }
         function art(card, slot = 0) {
           if (card.image && /^data:image\/(png|jpeg|webp);base64,/i.test(card.image))
@@ -1651,7 +2117,7 @@
           );
         }
         function renderTitle() {
-          return '<main class="title-page"><div class="arcade-label">TICK TOCK · MY LITTLE DAY</div><button class="title-start" data-action="start" aria-label="게임 시작"><div class="mascot-clock" aria-hidden="true"></div><h1><span>시계는 째깍!</span> <span>하루는 찰칵!</span></h1><div class="press">PRESS ANY BUTTON</div><div class="title-caption">게임을 시작하려면 아무 버튼이나 누르세요</div></button><div class="title-footer"><span class="subtle" style="color:#b3afd0">나만의 하루를 만드는 시간 여행</span><button class="ghost" data-action="teacher">선생님 준비</button></div></main>';
+          return '<main class="title-page"><div class="arcade-label">TICK TOCK · MY LITTLE DAY</div><button class="title-start" data-action="start" aria-label="게임 시작"><div class="mascot-clock" aria-hidden="true"></div><h1><span>시계는 째깍!</span> <span>하루는 찰칵!</span></h1><div class="press">PRESS ANY BUTTON</div><div class="title-caption">게임을 시작하려면 아무 버튼이나 누르세요</div></button><div class="title-footer"><span class="subtle" style="color:#b3afd0">나만의 하루를 만드는 시간 여행</span><button class="ghost" data-action="teacher">선생님 준비</button><button class="ghost" data-action="teacher-gallery">선생님 공유모드</button></div></main>';
         }
         function avatar(s, i) {
           return (
@@ -1705,14 +2171,6 @@
               '내 하루를 순서대로 착착',
               '▧',
               '나만의 카드 8장',
-            ],
-            [
-              'sharing',
-              '공유모드',
-              '찰칵! 들려줘',
-              '나의 소중한 하루 이야기',
-              '▣',
-              '내 하루를 소개해요',
             ],
           ];
           return page(
@@ -1787,13 +2245,19 @@
               ) +
               notice() +
               '<div class="practice-layout"><div class="panel clock-panel">' +
-              clock(q.hour, q.minute, q.hint) +
-              '<div class="hint-actions"><button class="ghost" data-action="hint" data-value="minute">☀ 긴 바늘 보기</button><button class="ghost" data-action="hint" data-value="zoom">⌕ 크게 보기</button></div></div><div class="panel reward-panel">' +
+              clockCard(s, q.hour, q.minute, q.hint) +
+              '<div class="hint-actions"><button class="ghost" data-action="hint" data-value="minute" aria-pressed="' +
+              (q.hint === 'minute') +
+              '">긴 바늘 따라가기</button><button class="ghost" data-action="hint" data-value="hour" aria-pressed="' +
+              (q.hint === 'hour') +
+              '">짧은 바늘 사이 보기</button></div><p class="hint-explanation" aria-live="polite">' +
+              hintText(q) +
+              '</p></div><div class="panel reward-panel">' +
               (match && !q.dismissed
                 ? '<button class="reward-card" data-action="dismiss-card" aria-label="' +
                   esc(match.title) +
                   ' 일과 카드 닫기">' +
-                  art(match, data.students.indexOf(s)) +
+                  frontCard(s, match) +
                   '<small>카드를 한 번 더 누르면 닫혀요</small></button>'
                 : '<span class="eyebrow">시각을 골라요</span>' +
                   timeInput(
@@ -1848,8 +2312,8 @@
                     esc(c.title) +
                     ' 카드 뒤집기">' +
                     (p.flipped[c.id]
-                      ? clock(Math.floor(c.minute / 60) % 12 || 12, c.minute % 60)
-                      : art(c, data.students.indexOf(s))) +
+                      ? clockCard(s, Math.floor(c.minute / 60) % 12 || 12, c.minute % 60)
+                      : frontCard(s, c)) +
                     '<span class="flip-hint">' +
                     (p.flipped[c.id] ? '그림 보기 ↻' : '시계 보기 ↻') +
                     '</span></button>' +
@@ -1879,50 +2343,60 @@
         }
         function renderOrdering() {
           const s = student(),
-            p = s.progress;
+            p = s.progress,
+            selected = s.cards.find((c) => c.id === selectedOrderId);
           return page(
             top() +
               ended() +
               heading(
-                '실전모드 · PUT YOUR DAY IN ORDER',
+                '실전모드 · MY DAY',
                 '내 하루를 순서대로!',
-                '아침부터 밤까지 순서대로 놓아요. 화살표로 옮기거나 카드를 끌어 보세요.',
+                '① 옮길 카드를 눌러요. ② 놓고 싶은 자리를 눌러요.',
               ) +
               notice() +
+              '<div class="order-help" role="status">' +
+              (selected
+                ? '<strong>' +
+                  esc(selected.title) +
+                  '</strong> 카드를 놓을 자리를 눌러 주세요.<button class="ghost" data-action="cancel-order">선택 취소</button>'
+                : '1번부터 8번까지, 아침에서 밤 순서로 놓아요.') +
+              '</div>' +
               '<div class="order-list">' +
               p.order
                 .map((id, i) => {
-                  const c = s.cards.find((c) => c.id === id);
+                  const c = s.cards.find((c) => c.id === id),
+                    chosen = selectedOrderId === id,
+                    target = !!selected && !chosen;
                   return (
                     '<article class="order-card ' +
+                    (chosen ? 'selected ' : target ? 'target ' : '') +
                     (p.wrong.includes(id) ? 'wrong' : '') +
-                    '" draggable="' +
-                    (data.phase === 'active') +
                     '" data-order-id="' +
                     esc(id) +
-                    '"><span class="order-number">' +
-                    String(i + 1).padStart(2, '0') +
+                    '">' +
+                    '<button class="order-tile" data-action="pick-place" data-id="' +
+                    esc(id) +
+                    '" data-position="' +
+                    i +
+                    '" aria-label="' +
+                    (target ? i + 1 + '번째 자리에 놓기' : esc(c.title) + ' 카드 선택') +
+                    '" aria-pressed="' +
+                    chosen +
+                    '" ' +
+                    (data.phase === 'ended' ? 'disabled' : '') +
+                    '>' +
+                    '<span class="order-number">' +
+                    (i + 1) +
+                    '번째' +
+                    (i === 0 ? ' · 하루 시작' : i === 7 ? ' · 하루 끝' : '') +
                     '</span>' +
-                    art(c, data.students.indexOf(s)) +
-                    '<div class="order-info"><strong>' +
+                    frontCard(s, c) +
+                    (target ? '<span class="place-tag">여기에 놓기</span>' : '') +
+                    '<span class="order-info"><strong>' +
                     esc(c.title) +
                     '</strong><small>' +
                     timeText(c.minute) +
-                    '</small></div><div class="order-controls" data-position="' +
-                    i +
-                    '"><button class="move" data-action="move" data-id="' +
-                    esc(id) +
-                    '" data-direction="-1" aria-label="' +
-                    esc(c.title) +
-                    ' 앞으로" ' +
-                    (i === 0 || data.phase === 'ended' ? 'disabled' : '') +
-                    '>←</button><button class="move" data-action="move" data-id="' +
-                    esc(id) +
-                    '" data-direction="1" aria-label="' +
-                    esc(c.title) +
-                    ' 뒤로" ' +
-                    (i === 7 || data.phase === 'ended' ? 'disabled' : '') +
-                    '>→</button></div></article>'
+                    '</small></span></button></article>'
                   );
                 })
                 .join('') +
@@ -1938,7 +2412,7 @@
             top() +
               '<section class="panel completed"><div class="confetti" aria-hidden="true">✦ ☀ ✦</div><span class="eyebrow">MY DAY IS COMPLETE</span><h1>내 하루 완성!</h1><p>' +
               esc(label(student())) +
-              '의 멋진 하루가 완성되었어요.<br>친구들에게 나의 하루를 들려줄까요?</p><div class="actions"><button class="primary" data-action="mode" data-mode="sharing">내 하루 소개하기</button><button class="secondary" data-action="read-again" ' +
+              '의 멋진 하루가 완성되었어요.<br>선생님께 완성했다고 알려 주세요.</p><p class="subtle">다른 태블릿에서 했다면 완료 기록을 내보내 선생님께 전달해 주세요.</p><div class="actions"><button class="primary" data-action="export-result">완료 기록 내보내기</button><button class="secondary" data-action="read-again" ' +
               (data.phase === 'ended' ? 'disabled' : '') +
               '>시각 다시 읽기</button></div></section>',
           );
@@ -1953,7 +2427,7 @@
                   '<article class="timeline-card"><span class="timeline-time">' +
                   timeText(c.minute) +
                   '</span>' +
-                  art(c, data.students.indexOf(s)) +
+                  frontCard(s, c) +
                   '<h2>' +
                   esc(c.title) +
                   '</h2></article>'
@@ -1964,18 +2438,47 @@
           );
         }
         function renderSharing() {
-          const s = student();
+          const chosen = data.students.find(
+            (s) => s.id === shareStudentId && s.progress.stage === 'completed',
+          );
           return page(
-            top() +
+            '<div class="top"><span class="brand">선생님 공유모드</span><div class="gallery-controls"><label class="secondary result-import">완료 기록 불러오기<input type="file" id="result-import" aria-label="완료 기록 불러오기" multiple accept=".json,application/json" hidden></label><button class="secondary" data-action="teacher-back">선생님 준비</button><button class="ghost" data-action="title">시작 화면으로</button></div></div>' +
               heading(
-                '공유모드 · TELL YOUR STORY',
-                '찰칵! 내 하루를 들려줘',
-                esc(label(s)) + '의 하루 이야기',
+                'TEACHER SHARING',
+                '우리 반의 하루를 함께 봐요',
+                '완성한 학생의 이름을 누르면 그 학생이 배치한 일과표가 나와요.',
               ) +
-              (s.progress.stage === 'completed'
-                ? timeline(s) +
-                  '<div class="actions"><button class="secondary" data-action="print">나의 하루 인쇄하기</button></div>'
-                : '<section class="panel empty"><div class="confetti" aria-hidden="true">▧</div><h2>실전모드에서 일과표를 완성해 주세요</h2><p>완성한 나의 일과표가 여기에 나타나요.</p><button class="primary" data-action="mode" data-mode="practical">실전모드로 가기</button></section>'),
+              '<p class="teacher-warning">이 기기에서 완성한 기록은 바로 보여요. 다른 태블릿의 기록은 학생의 완료 화면에서 내보내고, 여기에서 여러 파일을 함께 불러와 주세요.</p>' +
+              notice() +
+              '<div class="teacher-gallery" aria-label="공유할 학생">' +
+              data.students
+                .map(
+                  (s, i) =>
+                    '<button class="gallery-student ' +
+                    (chosen?.id === s.id ? 'selected' : '') +
+                    '" data-action="teacher-share" data-id="' +
+                    esc(s.id) +
+                    '" aria-label="' +
+                    esc(label(s)) +
+                    ' 일과표 보기" ' +
+                    (s.progress.stage !== 'completed' ? 'disabled' : '') +
+                    '>' +
+                    avatar(s, i) +
+                    '<strong>' +
+                    esc(label(s)) +
+                    '</strong><small>' +
+                    (s.progress.stage === 'completed' ? '일과표 보기' : '아직 완성 전') +
+                    '</small></button>',
+                )
+                .join('') +
+              '</div>' +
+              (chosen
+                ? '<h2 class="center">' +
+                  esc(label(chosen)) +
+                  '의 하루</h2>' +
+                  timeline(chosen) +
+                  '<div class="actions"><button class="secondary" data-action="print">일과표 인쇄하기</button></div>'
+                : '<section class="panel center"><h2>완성한 학생의 이름을 골라 주세요</h2><p>아직 기록이 없다면 실전모드를 완성하거나 완료 기록을 불러와 주세요.</p></section>'),
           );
         }
         function setTeacher(id) {
@@ -2000,7 +2503,7 @@
         function renderTeacher() {
           const t = teacherDraft;
           return page(
-            '<div class="top"><span class="brand">◷ 선생님 준비</span><button class="secondary" data-action="teacher-exit">시작 화면으로</button></div><div class="teacher-toolbar"><div><span class="eyebrow">TEACHER\'S ROOM</span><h1>우리 반의 하루</h1></div><div class="actions" style="margin:0"><button class="secondary" data-action="phase">' +
+            '<div class="top"><span class="brand">◷ 선생님 준비</span><button class="secondary" data-action="teacher-exit">시작 화면으로</button></div><div class="teacher-toolbar"><div><span class="eyebrow">TEACHER\'S ROOM</span><h1>우리 반의 하루</h1></div><div class="actions" style="margin:0"><button class="primary" data-action="teacher-gallery">공유모드 열기</button><button class="secondary" data-action="phase">' +
               (data.phase === 'active' ? '수업 마치기' : '수업 다시 시작') +
               '</button><button class="secondary" data-action="export">자료 내보내기</button><label class="secondary" style="cursor:pointer;display:inline-flex;align-items:center">자료 불러오기<input type="file" id="import-file" accept=".json,application/json" aria-label="자료 불러오기" style="display:none"></label></div></div><p class="teacher-warning">이 파일 하나로 바로 수업할 수 있어요. 이름과 그림, 진행 내용은 현재 브라우저에 저장됩니다. 다른 기기에서 쓰려면 자료를 내보낸 뒤 그 기기에서 불러와 주세요. 여러 기기의 진행 상황은 자동으로 합쳐지지 않아요.</p>' +
               notice() +
@@ -2118,23 +2621,10 @@
           if (screen === 'title') html = renderTitle();
           else if (screen === 'names') html = renderNames();
           else if (screen === 'teacher') html = renderTeacher();
-          else if (screen === 'teacher-share') {
-            const s = data.students.find((s) => s.id === studentId);
-            html = page(
-              '<div class="top"><span class="chip">' +
-                esc(label(s)) +
-                '</span><button class="secondary" data-action="teacher-back">선생님 화면으로</button></div>' +
-                heading(
-                  'OUR CLASSROOM STORY',
-                  esc(label(s)) + '의 하루',
-                  '친구의 하루를 함께 살펴봐요.',
-                ) +
-                timeline(s),
-            );
-          } else if (student()) {
+          else if (screen === 'teacher-share') html = renderSharing();
+          else if (student()) {
             if (screen === 'menu') html = renderMenu();
             else if (screen === 'practice') html = renderPractice();
-            else if (screen === 'sharing') html = renderSharing();
             else if (screen === 'practical')
               html =
                 student().progress.stage === 'reading'
@@ -2157,7 +2647,7 @@
               ' · ' +
               (c.minute < 720 ? '오전' : '오후') +
               '</h2><div class="answer-dialog-grid">' +
-              clock(Math.floor(c.minute / 60) % 12 || 12, c.minute % 60) +
+              clockCard(student(), Math.floor(c.minute / 60) % 12 || 12, c.minute % 60) +
               timeInput(
                 p.answers[c.id],
                 'reading',
@@ -2183,6 +2673,7 @@
           status();
         }
         function navigate(next) {
+          selectedOrderId = '';
           editingCardId = '';
           screen = next;
           message = '';
@@ -2283,14 +2774,65 @@
           setTeacher(t.id);
           feedback('이 학생의 이름과 카드를 저장했어요.', 'success');
         }
-        function exportData() {
-          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }),
+        function downloadJson(value, filename) {
+          const blob = new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }),
             url = URL.createObjectURL(blob),
             a = document.createElement('a');
           a.href = url;
-          a.download = '째깍찰칵-수업자료.json';
+          a.download = filename;
           a.click();
           setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+        function exportData() {
+          downloadJson(data, '째깍찰칵-수업자료.json');
+        }
+        function exportResult() {
+          const s = student();
+          if (!s || s.progress.stage !== 'completed') return;
+          downloadJson(
+            { kind: 'sijong-student-result', version: 1, student: s },
+            '완료기록-' + s.name.replace(/[\\/:*?"<>|]/g, '-') + '.json',
+          );
+        }
+        async function importResults(files) {
+          if (!files.length) return;
+          try {
+            if (files.length > 6) throw Error('학생 6명까지 한 번에 불러올 수 있어요.');
+            const records = [];
+            for (const file of files) {
+              if (file.size > 18000000) throw Error('완료 기록 파일은 18MB 이하로 준비해 주세요.');
+              const r = JSON.parse(await file.text());
+              if (
+                r?.kind !== 'sijong-student-result' ||
+                r.version !== 1 ||
+                !r.student ||
+                r.student.progress?.stage !== 'completed' ||
+                !data.students.some((s) => s.id === r.student.id)
+              )
+                throw Error('학생의 완료 화면에서 내보낸 완료 기록 파일을 골라 주세요.');
+              if (records.some((s) => s.id === r.student.id))
+                throw Error('같은 학생의 파일이 두 개 있어요. 사용할 파일 하나만 골라 주세요.');
+              records.push(r.student);
+            }
+            const next = {
+              ...data,
+              students: data.students.map((s) => records.find((r) => r.id === s.id) || s),
+            };
+            if (!valid(next)) throw Error('완료 기록의 카드나 시각이 올바르지 않아요.');
+            if (
+              !window.confirm(
+                records.map(label).join(', ') +
+                  '의 완료 기록을 불러올까요? 이 학생들의 기존 자료와 기록을 교체하고 다른 학생들은 유지합니다.',
+              )
+            )
+              return;
+            data = next;
+            persist();
+            shareStudentId = records[0].id;
+            feedback(records.length + '명의 완료 기록을 불러왔어요.', 'success');
+          } catch (err) {
+            feedback(err.message || '완료 기록을 읽지 못했어요.');
+          }
         }
         root.addEventListener('click', (e) => {
           const button = e.target.closest('[data-action]');
@@ -2336,6 +2878,16 @@
               saveProgress();
             }
             navigate(button.dataset.mode);
+            return;
+          }
+          if (action === 'teacher-gallery') {
+            if (screen === 'teacher' && !confirmTeacherLeave()) return;
+            shareStudentId = '';
+            navigate('teacher-share');
+            return;
+          }
+          if (action === 'export-result') {
+            exportResult();
             return;
           }
           if (action === 'teacher') {
@@ -2407,10 +2959,11 @@
             return;
           }
           if (action === 'teacher-share') {
-            if (confirmTeacherLeave()) {
-              studentId = id;
-              navigate('teacher-share');
-            }
+            if (screen === 'teacher' && !confirmTeacherLeave()) return;
+            const selected = data.students.find((s) => s.id === id);
+            if (selected?.progress.stage !== 'completed') return;
+            shareStudentId = id;
+            navigate('teacher-share');
             return;
           }
           if (action === 'teacher-back') {
@@ -2527,24 +3080,33 @@
             }
             return;
           }
-          if (action === 'move') {
-            const index = p.order.indexOf(id),
-              target = index + Number(button.dataset.direction);
-            if (target < 0 || target >= 8) return;
+          if (action === 'cancel-order') {
+            selectedOrderId = '';
+            render();
+            return;
+          }
+          if (action === 'pick-place') {
+            if (p.stage !== 'ordering') return;
+            if (!selectedOrderId) {
+              selectedOrderId = id;
+              render();
+              return;
+            }
+            if (selectedOrderId === id) {
+              selectedOrderId = '';
+              render();
+              return;
+            }
+            const from = p.order.indexOf(selectedOrderId),
+              to = p.order.indexOf(id);
+            if (from < 0 || to < 0) return;
             keepScroll(() => {
-              [p.order[index], p.order[target]] = [p.order[target], p.order[index]];
+              p.order.splice(to, 0, p.order.splice(from, 1)[0]);
+              selectedOrderId = '';
               p.wrong = [];
               message = '';
               saveProgress();
             });
-            const control = root.querySelector(
-              '[data-action="move"][data-id="' +
-                id +
-                '"][data-direction="' +
-                button.dataset.direction +
-                '"]',
-            );
-            if (control && !control.disabled) control.focus({ preventScroll: true });
             return;
           }
           if (action === 'read-again') {
@@ -2555,6 +3117,7 @@
             return;
           }
           if (action === 'order-check') {
+            selectedOrderId = '';
             const expected = [...s.cards].sort((a, b) => a.minute - b.minute).map((c) => c.id);
             p.wrong = p.order.filter((id, i) => id !== expected[i]);
             if (p.wrong.length) {
@@ -2580,6 +3143,10 @@
         });
         root.addEventListener('change', async (e) => {
           const input = e.target;
+          if (input.id === 'result-import') {
+            await importResults([...input.files]);
+            return;
+          }
           if (input.id === 'import-file') {
             const file = input.files?.[0];
             if (!file) return;
@@ -2671,34 +3238,6 @@
             markTeacherDirty();
           }
         });
-        root.addEventListener('dragstart', (e) => {
-          const card = e.target.closest('[data-order-id]');
-          if (!card || !editAllowed()) return;
-          dragging = card.dataset.orderId;
-          e.dataTransfer?.setData('text/plain', dragging);
-          if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
-        });
-        root.addEventListener('dragover', (e) => {
-          if (dragging && e.target.closest('[data-order-id]')) e.preventDefault();
-        });
-        root.addEventListener('drop', (e) => {
-          const target = e.target.closest('[data-order-id]');
-          if (!target || !dragging || !editAllowed()) return;
-          e.preventDefault();
-          const order = student().progress.order,
-            from = order.indexOf(dragging),
-            to = order.indexOf(target.dataset.orderId);
-          if (from >= 0 && to >= 0) {
-            keepScroll(() => {
-              order.splice(to, 0, order.splice(from, 1)[0]);
-              student().progress.wrong = [];
-              message = '';
-              saveProgress();
-            });
-          }
-          dragging = null;
-        });
-        root.addEventListener('dragend', () => (dragging = null));
         window.addEventListener('keydown', (e) => {
           if (
             screen === 'title' &&
@@ -2707,7 +3246,7 @@
             !e.altKey &&
             !e.metaKey &&
             !['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'Escape'].includes(e.key) &&
-            !e.target.closest('button[data-action="teacher"]')
+            !e.target.closest('button[data-action="teacher"],button[data-action="teacher-gallery"]')
           ) {
             e.preventDefault();
             navigate('names');
