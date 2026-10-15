@@ -55,7 +55,7 @@
 
 **Interfaces:** `ClockTime = {hour:number; minute:0|30}`, `Period = 'am'|'pm'`, `Card = {id:string; studentId:string; title:string; kind:'wake'|'sleep'|'custom'; imageId:string; minuteOfDay:number}`, `AnswerMap = Record<string,ClockTime|null>`. Domain exports `toMinuteOfDay(time:ClockTime, period:Period):number`, `toClockTime(minuteOfDay:number):ClockTime`, `handAngles(time:ClockTime):{hour:number;minute:number}`, `validateCards(cards:Card[]):{cardId?:string;code:string}[]`, `gradeTimes(cards:Card[],answers:AnswerMap):string[]`, `gradeOrder(cards:Card[],order:string[]):string[]`, `matchPracticeCard(cards:Card[],time:ClockTime):Card|null`.
 
-- [ ] **1. Failing tests:** runner와 workspace 설정만 먼저 준비한다. `tests/helpers/cards.ts`에 `makeValidCards(studentId='s1'):Card[]`를 만들고, 고정 ID `c1`~`c8`, 하루 시각 `[420,450,480,720,900,1080,1170,1230]`, 첫 카드 wake·마지막 카드 sleep·나머지 custom, 가상 title·imageId를 사용한다. 다음 assertion을 포함한 domain tests를 작성한다.
+- [x] **1. Failing tests:** runner와 workspace 설정만 먼저 준비한다. `tests/helpers/cards.ts`에 `makeValidCards(studentId='s1'):Card[]`를 만들고, 고정 ID `c1`~`c8`, 하루 시각 `[420,450,480,720,900,1080,1170,1230]`, 첫 카드 wake·마지막 카드 sleep·나머지 custom, 가상 title·imageId를 사용한다. 다음 assertion을 포함한 domain tests를 작성한다.
 
 ```ts
 expect(toMinuteOfDay({hour:12,minute:0},'am')).toBe(0);
@@ -68,10 +68,10 @@ expect(matchPracticeCard(amAndPmCards,{hour:7,minute:0})?.id).toBe('c1');
 ```
 
 추가 테스트명: `rejects_out_of_range_time`, `requires_exactly_eight_unique_cards`, `requires_wake_before_sleep`, `rejects_missing_duplicate_or_foreign_order_ids`, `marks_only_wrong_time_ids`, `covers_all_24_clock_faces`.
-- [ ] **2. Red:** `/workspace/sijong_v1`에서 위 구성에 필요한 의존성만 설치하고 `npm test -- tests/domain` 실행. domain export 미구현으로 실패하는지 확인한다. 테스트 0개 통과는 인정하지 않는다.
-- [ ] **3. Implement:** 위 정확한 함수와 타입을 구현한다. contracts는 Zod 요청 스키마와 수업·실전 단계 enum을 제공한다. 이름 선택과 학급 연결 역할을 별도 구분한다. `.nvmrc`는 검증된 24.19.0, engines는 Node `>=24 <25`로 지정한다. 모든 새로운 의존성은 실제 설치 가능한 호환 버전으로 lockfile에 고정하고 기존 문서는 수정하지 않는다.
-- [ ] **4. Green:** `npm test -- tests/domain`과 `npm run typecheck`. 전환·범위·카드 판정 테스트가 모두 실행돼 통과해야 한다.
-- [ ] **5. Commit:** `feat: define clock learning rules and shared contracts`.
+- [x] **2. Red:** `/workspace/sijong_v1`에서 위 구성에 필요한 의존성만 설치하고 `npm test -- tests/domain` 실행. domain export 미구현으로 실패하는지 확인한다. 테스트 0개 통과는 인정하지 않는다.
+- [x] **3. Implement:** 위 정확한 함수와 타입을 구현한다. contracts는 Zod 요청 스키마와 수업·실전 단계 enum을 제공한다. 이름 선택과 학급 연결 역할을 별도 구분한다. `.nvmrc`는 검증된 24.19.0, engines는 Node `>=24 <25`로 지정한다. 모든 새로운 의존성은 실제 설치 가능한 호환 버전으로 lockfile에 고정하고 기존 문서는 수정하지 않는다.
+- [x] **4. Green:** `npm test -- tests/domain`과 `npm run typecheck`. 전환·범위·카드 판정 테스트가 모두 실행돼 통과해야 한다.
+- [x] **5. Commit:** `feat: define clock learning rules and shared contracts`.
 
 ## Task 2: 영속 저장과 가상 학급
 
