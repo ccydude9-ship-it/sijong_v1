@@ -1,0 +1,3 @@
+import request from 'supertest';import {createFixture} from './fixture';import {createApp} from '../../apps/server/src/app';
+export async function createServerFixture(){const f=await createFixture();const app=createApp({store:f.store,config:f.config});return {...f,app,client:request(app)};}
+export async function loginTeacher(f:Awaited<ReturnType<typeof createServerFixture>>){const r=await f.client.post('/api/auth/teacher').set('Origin',f.config.publicOrigin).send({password:f.config.teacherPassword});if(r.status!==200)throw Error(`teacher login ${r.status}`);return {cookie:r.headers['set-cookie'][0].split(';')[0] as string,csrf:r.body.csrfToken as string};}
