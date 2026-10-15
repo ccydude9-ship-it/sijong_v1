@@ -9,3 +9,4 @@ export type StudentSnapshot={lessonId:string;phase:LessonPhase;phaseRevision:num
 export type StudentSummary={studentId:string;displayName:string;distinction:string;progressRevision:number;stage:StudentProgress['stage'];correctTimeCount:number;solvedCount:number;connected:boolean;completedAt:string|null};
 export type TeacherSnapshot={lessonId:string;phase:LessonPhase;phaseRevision:number;students:StudentSummary[]};
 export type Session={id:string;role:'teacher'|'classroom'|'student';lessonId:string|null;studentId:string|null;expiresAt:number};
+export type TeacherLesson={id:string;phase:LessonPhase;revision:number;students:(RosterItem&{slot:number;cards:Card[];progress:StudentProgress;solvedCount:number})[]};
