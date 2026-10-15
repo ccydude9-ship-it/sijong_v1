@@ -151,11 +151,11 @@ expect(matchPracticeCard(amAndPmCards,{hour:7,minute:0})?.id).toBe('c1');
 
 **Interfaces:** `EventHub.publishCommitted(lessonId:string):void`, `subscribe(session:Session,send:(event:SnapshotEvent)=>void):()=>void`, `revoke(sessionIds:string[]):void`, `close():void`. `SnapshotEvent={type:'snapshot';data:StudentSnapshot|TeacherSnapshot}`, `TeacherSnapshot={lessonId:string;phase:LessonPhase;phaseRevision:number;students:StudentSummary[]}`, `StudentSummary={studentId:string;displayName:string;distinction:string;progressRevision:number;stage:StudentProgress['stage'];correctTimeCount:number;solvedCount:number;connected:boolean;completedAt:string|null}`. Full teacher lesson API supplies authorized completed card views; student events contain own state only.
 
-- [ ] **1. Failing tests:** `connect_and_reconnect_send_current_snapshot`; `student_event_contains_no_peer_data`; `classroom_session_cannot_subscribe`; `rollback_emits_nothing`; `committed_update_arrives_under_2s`; `revocation_closes_open_stream`; `phase_change_during_student_save_yields_consistent_snapshot`; `expiry_closes_connection`; `multiple_tabs_keep_connected_until_last_close`.
-- [ ] **2. Red:** `npm test -- tests/server/events.test.ts` fails on missing SSE hub/routes.
-- [ ] **3. Implement:** `/api/events` checks role/scope and keeps session expiry enforcement while open. Send initial fresh snapshot, updates only after commit, heartbeat every 15 seconds; cleanup on close and shutdown. Connectivity is count of live authenticated student streams, not evidence of learning completion. Use no-cache headers and disable response buffering. New subscribers get full current state, not an assumed persistent process event log.
-- [ ] **4. Green:** event suite and mutation suites pass; tests close all streams/server handles and preserve failing underlying exit codes.
-- [ ] **5. Commit:** `feat: stream authorized lesson progress snapshots`.
+- [x] **1. Failing tests:** `connect_and_reconnect_send_current_snapshot`; `student_event_contains_no_peer_data`; `classroom_session_cannot_subscribe`; `rollback_emits_nothing`; `committed_update_arrives_under_2s`; `revocation_closes_open_stream`; `phase_change_during_student_save_yields_consistent_snapshot`; `expiry_closes_connection`; `multiple_tabs_keep_connected_until_last_close`.
+- [x] **2. Red:** `npm test -- tests/server/events.test.ts` fails on missing SSE hub/routes.
+- [x] **3. Implement:** `/api/events` checks role/scope and keeps session expiry enforcement while open. Send initial fresh snapshot, updates only after commit, heartbeat every 15 seconds; cleanup on close and shutdown. Connectivity is count of live authenticated student streams, not evidence of learning completion. Use no-cache headers and disable response buffering. New subscribers get full current state, not an assumed persistent process event log.
+- [x] **4. Green:** event suite and mutation suites pass; tests close all streams/server handles and preserve failing underlying exit codes.
+- [x] **5. Commit:** `feat: stream authorized lesson progress snapshots`.
 
 ## Task 9: 오락실 타이틀·이름 선택·모드 메뉴와 교사 준비 화면
 
