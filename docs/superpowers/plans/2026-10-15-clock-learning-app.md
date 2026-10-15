@@ -127,11 +127,11 @@ expect(matchPracticeCard(amAndPmCards,{hour:7,minute:0})?.id).toBe('c1');
 
 **Interfaces:** `PracticeService.next(session:Session):PracticeQuestion`, `check(session:Session,id:string,answer:ClockTime):PracticeResult`; `PracticeQuestion={id:string;clock:ClockTime}`, `PracticeResult={correct:boolean;matchedCardId:string|null;solvedCount:number}`. Server never accepts client-provided target time or count.
 
-- [ ] **1. Failing tests:** `samples_all_24_faces` uses deterministic test random source; `unsolved_question_is_reused`; `wrong_answer_does_not_expose_target_in_feedback`; `solved_answer_counts_once`; `no_matching_card_still_succeeds`; `matching_am_pm_selects_earlier_card`; `active_lesson_allows_practice_without_mode_lock`; `another_student_question_is_forbidden`; `no_ten_question_limit` solves at least 25.
-- [ ] **2. Red:** `npm test -- tests/server/practice.test.ts` fails on missing API.
-- [ ] **3. Implement:** server-generated problem IDs and random time, persist unsolved question and counters; atomic solved transition; reuse Task 1 matching rule. Practice is available during active lesson regardless of practical completion and mode roundtrip reuses unsolved question. Target clock is intentionally sent for drawing, but verdict/hint/accessible feedback text never discloses numeric answer. Wrong answers are successful HTTP responses with `correct:false`.
-- [ ] **4. Green:** practice suite and domain suite pass, including exactly-once count after repeated identical check.
-- [ ] **5. Commit:** `feat: generate and grade unlimited clock practice`.
+- [x] **1. Failing tests:** `samples_all_24_faces` uses deterministic test random source; `unsolved_question_is_reused`; `wrong_answer_does_not_expose_target_in_feedback`; `solved_answer_counts_once`; `no_matching_card_still_succeeds`; `matching_am_pm_selects_earlier_card`; `active_lesson_allows_practice_without_mode_lock`; `another_student_question_is_forbidden`; `no_ten_question_limit` solves at least 25.
+- [x] **2. Red:** `npm test -- tests/server/practice.test.ts` fails on missing API.
+- [x] **3. Implement:** server-generated problem IDs and random time, persist unsolved question and counters; atomic solved transition; reuse Task 1 matching rule. Practice is available during active lesson regardless of practical completion and mode roundtrip reuses unsolved question. Target clock is intentionally sent for drawing, but verdict/hint/accessible feedback text never discloses numeric answer. Wrong answers are successful HTTP responses with `correct:false`.
+- [x] **4. Green:** practice suite and domain suite pass, including exactly-once count after repeated identical check.
+- [x] **5. Commit:** `feat: generate and grade unlimited clock practice`.
 
 ## Task 7: 실전 입력·배열의 저장과 판정 API
 
