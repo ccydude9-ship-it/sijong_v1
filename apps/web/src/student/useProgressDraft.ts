@@ -6,6 +6,7 @@ import type {
   ProgressCommand,
 } from '../../../../packages/contracts/src/index';
 import { request, json, ApiError } from '../api/client';
+import { mergeStudentSnapshot } from '../realtime/merge';
 export type SaveStatus = 'saved' | 'saving' | 'offline' | 'error' | 'conflict';
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 export function useProgressDraft(snapshot: StudentSnapshot) {
@@ -125,16 +126,26 @@ export function useProgressDraft(snapshot: StudentSnapshot) {
         if (
           e.status === 409 &&
           remote?.progress &&
+          remote.lessonId === lesson.current.id &&
           remote.student?.id === draft.current.studentId
         ) {
-          confirmed.current = remote.progress;
+          const latest = mergeStudentSnapshot(
+            {
+              ...remote,
+              progress: confirmed.current,
+              phase: lesson.current.phase,
+              phaseRevision: lesson.current.revision,
+            },
+            remote,
+          );
+          confirmed.current = latest.progress;
           lesson.current = {
-            id: remote.lessonId,
-            phase: remote.phase,
-            revision: remote.phaseRevision,
+            id: latest.lessonId,
+            phase: latest.phase,
+            revision: latest.phaseRevision,
           };
-          conflict.current = remote;
-          setStatus(remote.phase === 'active' ? 'conflict' : 'error');
+          conflict.current = latest;
+          setStatus(latest.phase === 'active' ? 'conflict' : 'error');
         } else setStatus('error');
       } else setStatus(navigator.onLine ? 'error' : 'offline');
       setError(e instanceof Error ? e.message : '연결을 확인해 주세요');
@@ -185,6 +196,21 @@ export function useProgressDraft(snapshot: StudentSnapshot) {
       return false;
     }
   }
+  async function leaveStudent() {
+    if (!navigator.onLine && (changed() || pending.current)) {
+      setStatus('offline');
+      setError(
+        '이름을 바꾸기 전에 연결을 확인하고 다시 저장하거나, 저장 안 된 변경을 취소해 주세요.',
+      );
+      return false;
+    }
+    try {
+      await submit('save');
+      return true;
+    } catch {
+      return false;
+    }
+  }
   function discardDraft() {
     pending.current = null;
     conflict.current = null;
@@ -216,8 +242,8 @@ export function useProgressDraft(snapshot: StudentSnapshot) {
   }
   const canReapply =
     !!conflict.current &&
-    conflict.current.phase === 'active' &&
-    conflict.current.progress.stage === draft.current.stage;
+    lesson.current.phase === 'active' &&
+    confirmed.current.stage === draft.current.stage;
   async function reapplyDraft() {
     if (!canReapply) throw Error('수업 상태가 바뀌어 초안을 적용할 수 없습니다');
     conflict.current = null;
@@ -245,6 +271,7 @@ export function useProgressDraft(snapshot: StudentSnapshot) {
     updateOrder,
     submit,
     goHome,
+    leaveStudent,
     discardDraft,
     recover,
     reapplyDraft,

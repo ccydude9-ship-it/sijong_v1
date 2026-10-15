@@ -34,10 +34,12 @@ export function ModeMenu({
   studentName,
   onSelect,
   onChangeName,
+  changingName = false,
 }: {
   studentName: string;
   onSelect: (mode: StudentMode) => void;
   onChangeName: () => Promise<void>;
+  changingName?: boolean;
 }) {
   return (
     <main className="page mode-page">
@@ -46,7 +48,7 @@ export function ModeMenu({
           <UserRound size={16} />
           {studentName}
         </span>
-        <button className="ghost" onClick={() => void onChangeName()}>
+        <button className="ghost" disabled={changingName} onClick={() => void onChangeName()}>
           이름 다시 고르기
         </button>
       </div>
@@ -59,7 +61,12 @@ export function ModeMenu({
       </header>
       <div className="mode-grid">
         {modes.map((m, i) => (
-          <button key={m.id} className={`mode-tile ${m.tone}`} onClick={() => onSelect(m.id)}>
+          <button
+            key={m.id}
+            disabled={changingName}
+            className={`mode-tile ${m.tone}`}
+            onClick={() => onSelect(m.id)}
+          >
             <div className="mode-top">
               <span>
                 0{i + 1} · {m.name}

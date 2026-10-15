@@ -22,6 +22,8 @@ export function StudentWorkspace({
   const [mode, setMode] = useState<StudentMode | null>(null),
     [solved, setSolved] = useState(snapshot.solvedCount),
     [sound, setSound] = useState(false),
+    [nameError, setNameError] = useState(''),
+    [changingName, setChangingName] = useState(false),
     [practice, setPractice] = useState<PracticeDraft>({
       question: snapshot.practice,
       answer: null,
@@ -120,6 +122,11 @@ export function StudentWorkspace({
           </button>
         </div>
       )}
+      {nameError && (
+        <p className="notice error" role="alert">
+          {nameError}
+        </p>
+      )}
     </>
   );
   if (!mode)
@@ -129,8 +136,20 @@ export function StudentWorkspace({
         <ModeMenu
           studentName={`${snapshot.student.displayName} ${snapshot.student.distinction}`.trim()}
           onSelect={setMode}
+          changingName={changingName}
           onChangeName={async () => {
-            if (await editor.goHome()) await onChangeName();
+            if (changingName) return;
+            setChangingName(true);
+            setNameError('');
+            try {
+              if (await editor.leaveStudent()) await onChangeName();
+            } catch (e) {
+              setNameError(
+                e instanceof Error ? e.message : '이름을 바꾸지 못했어요. 다시 시도해 주세요.',
+              );
+            } finally {
+              setChangingName(false);
+            }
           }}
         />
       </>

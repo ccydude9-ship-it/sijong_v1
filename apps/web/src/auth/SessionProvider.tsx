@@ -26,8 +26,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }
   function change() {
     version.current++;
-    setEpoch(version.current);
     return version.current;
+  }
+  function commit(v: number, s: ClientSession | null) {
+    if (v !== version.current) throw new DOMException('이전 접속', 'AbortError');
+    accept(s);
+    setEpoch(v);
   }
   async function refresh() {
     const v = version.current;
@@ -50,13 +54,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   async function login(path: string, body: object) {
     const v = change(),
       s = await request<ClientSession>(path, json('POST', body));
-    if (v !== version.current) throw new DOMException('이전 접속', 'AbortError');
-    accept(s);
+    commit(v, s);
   }
   async function resetStudent() {
     const v = change(),
       s = await request<ClientSession>('/api/auth/student/reset', json('POST', {}));
-    if (v === version.current) accept(s);
+    commit(v, s);
   }
   async function selectStudent(id: string) {
     const v = change();
@@ -66,13 +69,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       accept(c);
     }
     const s = await request<ClientSession>('/api/auth/student', json('POST', { studentId: id }));
-    if (v !== version.current) throw new DOMException('이전 접속', 'AbortError');
-    accept(s);
+    commit(v, s);
   }
   async function logout() {
-    change();
+    const v = change();
     await request('/api/auth/logout', json('POST', {}));
-    accept(null);
+    commit(v, null);
   }
   return (
     <Context.Provider

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { TeacherLesson, Card } from '../../../../packages/contracts/src/index';
 import { toClockTime, toMinuteOfDay } from '../../../../packages/domain/src/index';
 type Student = TeacherLesson['students'][number];
@@ -8,17 +8,32 @@ export function StudentCardEditor({
   disabled,
   onSave,
   onUpload,
+  onStatusChange,
 }: {
   student: Student;
   disabled: boolean;
   onSave: (setup: Setup) => Promise<void>;
   onUpload: (file: File) => Promise<string>;
+  onStatusChange?: (id: string, blocked: boolean) => void;
 }) {
   const [name, setName] = useState(student.displayName),
     [distinction, setDistinction] = useState(student.distinction),
     [cards, setCards] = useState(student.cards),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
+  const dirty =
+    name !== student.displayName ||
+    distinction !== student.distinction ||
+    JSON.stringify(cards) !== JSON.stringify(student.cards);
+  useEffect(() => {
+    onStatusChange?.(student.id, dirty || busy);
+  }, [student.id, dirty, busy, onStatusChange]);
+  function discard() {
+    setName(student.displayName);
+    setDistinction(student.distinction);
+    setCards(student.cards);
+    setError('');
+  }
   function patch(id: string, changes: Partial<Card>) {
     setCards((cs) => cs.map((c) => (c.id === id ? { ...c, ...changes } : c)));
   }
@@ -31,7 +46,7 @@ export function StudentCardEditor({
             aria-label="학생 이름"
             value={name}
             maxLength={30}
-            disabled={disabled}
+            disabled={disabled || busy}
             onChange={(e) => setName(e.target.value)}
           />
         </label>
@@ -40,7 +55,7 @@ export function StudentCardEditor({
           <input
             value={distinction}
             maxLength={30}
-            disabled={disabled}
+            disabled={disabled || busy}
             placeholder="필요할 때만 입력"
             onChange={(e) => setDistinction(e.target.value)}
           />
@@ -137,6 +152,11 @@ export function StudentCardEditor({
         <p role="alert" className="notice error">
           {error}
         </p>
+      )}
+      {dirty && (
+        <button className="ghost" disabled={disabled || busy} onClick={discard}>
+          변경 취소
+        </button>
       )}
       <button
         className="primary"

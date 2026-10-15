@@ -1,5 +1,32 @@
 import { toClockTime } from '../../packages/domain/src/index';
 import { test, expect, teacherPage, studentPage, completePractical } from '../helpers/browser';
+test('teacher saves edited cards before starting and students see the same titles', async ({
+  browser,
+  page,
+  classroom: c,
+}) => {
+  await page.goto(c.url);
+  await page.getByRole('button', { name: '선생님 입장' }).click();
+  await page.getByLabel('선생님 비밀번호').fill(c.config.teacherPassword!);
+  await page.getByRole('button', { name: '입장하기', exact: true }).click();
+  await page.getByLabel('일과 이름').first().fill('수정된 일과');
+  await expect(page.getByRole('button', { name: '수업 시작하기' })).toBeDisabled();
+  await expect(page.getByText(/변경한 학생 카드를 저장하거나 취소/)).toBeVisible();
+  await page.getByRole('button', { name: '이 학생 저장', exact: true }).click();
+  await expect(page.getByRole('button', { name: '수업 시작하기' })).toBeEnabled();
+  await page.getByRole('button', { name: '수업 시작하기' }).click();
+  await expect(page.getByText('함께 배우는 중')).toBeVisible();
+  await expect(page.getByLabel('일과 이름').first()).toHaveValue('수정된 일과');
+  const ctx = await browser.newContext();
+  try {
+    const p = await ctx.newPage();
+    await studentPage(p, c, c.students[0]);
+    await p.getByRole('button', { name: /실전모드/ }).click();
+    await expect(p.getByRole('button', { name: '수정된 일과 카드 뒤집기' })).toBeVisible();
+  } finally {
+    await ctx.close();
+  }
+});
 test('arcade entry and six independent students with live teacher dashboard', async ({
   browser,
   page,

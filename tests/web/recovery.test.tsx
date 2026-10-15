@@ -88,3 +88,48 @@ it('ended_lesson_prevents_reapply', async () => {
   });
   expect(result.current.canReapply).toBe(false);
 });
+it.each(['active', 'ended'] as const)(
+  'delayed_conflict_keeps_newer_progress_and_%s_phase',
+  async (phase) => {
+    const initial = makeSnapshot(),
+      stale = makeSnapshot(),
+      latest = makeSnapshot();
+    stale.progress = { ...stale.progress, revision: 1 };
+    latest.phase = phase;
+    latest.phaseRevision = 3;
+    latest.progress = { ...latest.progress, revision: 2, answers: { c2: { hour: 8, minute: 0 } } };
+    let finish!: (r: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise<Response>((r) => {
+            finish = r;
+          }),
+      ),
+    );
+    const { result, rerender } = renderHook(({ s }) => useProgressDraft(s), {
+      initialProps: { s: initial },
+    });
+    act(() => result.current.updateAnswer('c1', { hour: 5, minute: 0 }));
+    let saving!: Promise<void>;
+    act(() => {
+      saving = result.current.submit('save').catch(() => {});
+    });
+    await waitFor(() => expect(result.current.busy).toBe(true));
+    rerender({ s: latest });
+    await act(async () => {
+      finish(Response.json({ message: '저장 충돌', details: stale }, { status: 409 }));
+      await saving;
+    });
+    expect(result.current.canReapply).toBe(phase === 'active');
+    act(() => result.current.discardDraft());
+    expect(result.current.progress.revision).toBe(2);
+    expect(result.current.progress.answers.c2?.hour).toBe(8);
+    if (phase === 'ended') {
+      await act(async () => {
+        await expect(result.current.submit('check-times')).rejects.toThrow('수업이 끝났어요');
+      });
+    }
+  },
+);

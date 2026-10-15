@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import type { TeacherLesson } from '../../../../packages/contracts/src/index';
 import { request, json, ApiError } from '../api/client';
 import { StudentCardEditor } from './StudentCardEditor';
@@ -15,7 +15,14 @@ export function LessonSetup({
     [selected, setSelected] = useState(''),
     [code, setCode] = useState(''),
     [error, setError] = useState(''),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [blockedEditors, setBlockedEditors] = useState<Record<string, boolean>>({});
+  const editorStatus = useCallback((id: string, blocked: boolean) => {
+    setBlockedEditors((current) =>
+      current[id] === blocked ? current : { ...current, [id]: blocked },
+    );
+  }, []);
+  const unfinished = Object.values(blockedEditors).some(Boolean);
   async function load() {
     const data = await request<TeacherLesson>(`/api/teacher/lessons/${lessonId}`);
     setLesson(data);
@@ -26,6 +33,10 @@ export function LessonSetup({
   }, [lessonId]);
   if (!lesson) return <p className="notice">{error || '수업을 불러오고 있어요…'}</p>;
   async function phase(target: 'active' | 'ended', confirmIncomplete = false) {
+    if (target === 'active' && unfinished) {
+      setError('변경한 학생 카드를 저장하거나 취소한 뒤 수업을 시작해 주세요.');
+      return;
+    }
     setBusy(true);
     setError('');
     try {
@@ -84,7 +95,11 @@ export function LessonSetup({
             </button>
           )}
           {lesson.phase === 'preparing' && (
-            <button className="primary" disabled={busy} onClick={() => void phase('active')}>
+            <button
+              className="primary"
+              disabled={busy || unfinished}
+              onClick={() => void phase('active')}
+            >
               수업 시작하기
             </button>
           )}
@@ -95,6 +110,12 @@ export function LessonSetup({
           )}
         </div>
       </div>
+      {lesson.phase === 'preparing' && unfinished && (
+        <p className="notice" role="status">
+          변경한 학생 카드를 저장하거나 취소한 뒤 수업을 시작해 주세요. 그림을 등록하거나 저장하는
+          중에는 잠시 기다려 주세요.
+        </p>
+      )}
       {code && (
         <div className="notice code-panel">
           <strong>
@@ -131,7 +152,8 @@ export function LessonSetup({
         <div key={s.id} hidden={selected !== s.id}>
           <StudentCardEditor
             student={s}
-            disabled={lesson.phase !== 'preparing'}
+            disabled={busy || lesson.phase !== 'preparing'}
+            onStatusChange={editorStatus}
             onSave={async (body) => {
               const updated = await request<TeacherLesson>(
                 `/api/teacher/lessons/${lessonId}/students/${s.slot}`,

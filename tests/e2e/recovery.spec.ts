@@ -14,6 +14,9 @@ test('offline home preserves draft and reconnect plus reload restores confirmed 
     .getByRole('button', { name: '5시', exact: true })
     .click();
   await page.getByRole('button', { name: '홈으로 돌아가기' }).click();
+  await page.getByRole('button', { name: '이름 다시 고르기' }).click();
+  await expect(page.getByRole('alert')).toContainText('이름을 바꾸기 전에');
+  await expect(page.getByRole('button', { name: '저장 안 된 변경 취소' })).toBeVisible();
   await page.getByRole('button', { name: /실전모드/ }).click();
   await expect(
     page.getByTestId(`reading-${card.id}`).getByRole('button', { name: '5시', exact: true }),
@@ -57,6 +60,31 @@ test('lost saved response retries same operation without duplicate mutation', as
   expect(operations).toHaveLength(2);
   expect(operations[0]).toBe(operations[1]);
   expect(c.store.progress.get(student.id).revision).toBe(1);
+});
+test('failed name reset keeps practice draft and allows retry', async ({ page, classroom: c }) => {
+  c.store.lessons.set({ ...c.store.lessons.get(c.lessonId)!, phase: 'active' });
+  await studentPage(page, c, c.students[0]);
+  await page.getByRole('button', { name: /연습모드/ }).click();
+  await page.getByRole('button', { name: '5시', exact: true }).click();
+  await page.getByRole('button', { name: '홈으로 돌아가기' }).click();
+  await page.route('**/api/auth/student/reset', (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: '잠시 연결할 수 없어요' }),
+    }),
+  );
+  await page.getByRole('button', { name: '이름 다시 고르기' }).click();
+  await expect(page.getByRole('alert')).toContainText('잠시 연결할 수 없어요');
+  await page.getByRole('button', { name: /연습모드/ }).click();
+  await expect(page.getByRole('button', { name: '5시', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.getByRole('button', { name: '홈으로 돌아가기' }).click();
+  await page.unroute('**/api/auth/student/reset');
+  await page.getByRole('button', { name: '이름 다시 고르기' }).click();
+  await expect(page.getByRole('heading', { name: /내 이름을 골라요/ })).toBeVisible();
 });
 test('server restart preserves session artwork and progress', async ({ page, classroom: c }) => {
   c.store.lessons.set({ ...c.store.lessons.get(c.lessonId)!, phase: 'active' });
