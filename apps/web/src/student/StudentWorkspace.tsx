@@ -1,7 +1,201 @@
-import React,{useEffect,useRef,useState} from 'react';import {useSnapshot} from '../realtime/useSnapshot';import {mergeStudentSnapshot} from '../realtime/merge';import {ConnectionStatus} from './ConnectionStatus';import type {StudentSnapshot,StudentMode} from '../../../../packages/contracts/src/index';import {ModeMenu} from './ModeMenu';import {ModeShell} from './ModeShell';import {ReadingView} from './ReadingView';import {OrderingView} from './OrderingView';import {PracticeView,type PracticeDraft} from './PracticeView';import {CompletedView} from './CompletedView';import {StudentShareView} from './StudentShareView';import {useProgressDraft} from './useProgressDraft';import {SoundToggle} from '../components/SoundToggle';
-export function StudentWorkspace({snapshot,onChangeName}:{snapshot:StudentSnapshot;onChangeName:()=>Promise<void>}){const [mode,setMode]=useState<StudentMode|null>(null),[solved,setSolved]=useState(snapshot.solvedCount),[sound,setSound]=useState(false),[practice,setPractice]=useState<PracticeDraft>({question:snapshot.practice,answer:null,hint:'none',correct:false,matchedCardId:null});const stream=useSnapshot({role:'student',lessonId:snapshot.lessonId,studentId:snapshot.student.id,epoch:0});const fresh=stream.snapshot&&'progress' in stream.snapshot?mergeStudentSnapshot(snapshot,stream.snapshot):snapshot;const editor=useProgressDraft(fresh),audio=useRef<AudioContext|null>(null);useEffect(()=>()=>{void audio.current?.close();},[]);async function home(){if(await editor.goHome())setMode(null);}function play(){if(!sound||!audio.current||audio.current.state!=='running')return;const ctx=audio.current;for(const [i,f]of [523,659,784].entries()){const osc=ctx.createOscillator(),gain=ctx.createGain();osc.frequency.value=f;gain.gain.setValueAtTime(.055,ctx.currentTime+i*.1);gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+i*.1+.18);osc.connect(gain).connect(ctx.destination);osc.start(ctx.currentTime+i*.1);osc.stop(ctx.currentTime+i*.1+.2);}}
- useEffect(()=>{if(stream.connected)void editor.recover().catch(()=>{});},[stream.connected]);
- const current={...fresh,progress:editor.progress,solvedCount:Math.max(solved,fresh.solvedCount)};const warning=<>{fresh.phase!=='active'&&<p className="notice">{fresh.phase==='preparing'?'선생님이 수업을 준비하고 있어요. 잠시 기다려 주세요.':'수업이 끝났어요. 저장된 나의 하루를 볼 수 있어요.'}</p>}{editor.status==='offline'&&<p className="notice" role="status">연결을 확인해 주세요. 작성 중인 내용은 이 화면에 남아 있어요. 새로고침하면 저장 전 내용은 사라질 수 있어요.</p>}{editor.error&&<div className="notice error" role="alert"><p>{editor.error}</p>{editor.status==='conflict'?<><button className="secondary" onClick={()=>editor.discardDraft()}>저장된 내용 사용</button>{editor.canReapply&&<button className="secondary" onClick={()=>void editor.reapplyDraft().catch(()=>{})}>내 초안 다시 적용</button>}</>:<button className="secondary" onClick={()=>void editor.recover().catch(()=>{})}>다시 저장</button>} <button className="ghost" onClick={()=>{editor.discardDraft();setMode(null);}}>저장 안 된 변경 취소</button></div>}</>;
- if(!mode)return <>{warning}<ModeMenu studentName={`${snapshot.student.displayName} ${snapshot.student.distinction}`.trim()} onSelect={setMode} onChangeName={async()=>{if(await editor.goHome())await onChangeName();}}/></>;
- return <ModeShell studentName={`${snapshot.student.displayName} ${snapshot.student.distinction}`.trim()} onHome={home}><div className="activity-status"><ConnectionStatus connected={stream.connected}/><span role="status">{editor.status==='saving'?'저장 중…':editor.status==='saved'?'저장됨':editor.status==='offline'?'연결 확인 중':'저장을 확인해 주세요'}</span><SoundToggle enabled={sound} onToggle={()=>{if(!sound){audio.current??=new AudioContext();void audio.current.resume();}setSound(!sound);}}/></div>{warning}{mode==='practice'?<PracticeView snapshot={current} draft={practice} onDraft={setPractice} onSolved={setSolved} onSound={play}/>:mode==='sharing'?<StudentShareView snapshot={current}/>:editor.progress.stage==='reading'?<ReadingView snapshot={current} progress={editor.progress} onAnswer={editor.updateAnswer} onCheck={()=>editor.submit('check-times').catch(()=>{})} busy={editor.busy}/>:editor.progress.stage==='ordering'?<OrderingView snapshot={current} progress={editor.progress} onOrder={editor.updateOrder} onCheck={()=>editor.submit('check-order').catch(()=>{})} onReadAgain={()=>editor.submit('return-to-reading').catch(()=>{})} busy={editor.busy||fresh.phase!=='active'}/>:<CompletedView onShare={()=>setMode('sharing')} onReadAgain={()=>editor.submit('return-to-reading').catch(()=>{})}/>}</ModeShell>;
+import React, { useEffect, useRef, useState } from 'react';
+import { useSnapshot } from '../realtime/useSnapshot';
+import { mergeStudentSnapshot } from '../realtime/merge';
+import { ConnectionStatus } from './ConnectionStatus';
+import type { StudentSnapshot, StudentMode } from '../../../../packages/contracts/src/index';
+import { ModeMenu } from './ModeMenu';
+import { ModeShell } from './ModeShell';
+import { ReadingView } from './ReadingView';
+import { OrderingView } from './OrderingView';
+import { PracticeView, type PracticeDraft } from './PracticeView';
+import { CompletedView } from './CompletedView';
+import { StudentShareView } from './StudentShareView';
+import { useProgressDraft } from './useProgressDraft';
+import { SoundToggle } from '../components/SoundToggle';
+export function StudentWorkspace({
+  snapshot,
+  onChangeName,
+}: {
+  snapshot: StudentSnapshot;
+  onChangeName: () => Promise<void>;
+}) {
+  const [mode, setMode] = useState<StudentMode | null>(null),
+    [solved, setSolved] = useState(snapshot.solvedCount),
+    [sound, setSound] = useState(false),
+    [practice, setPractice] = useState<PracticeDraft>({
+      question: snapshot.practice,
+      answer: null,
+      hint: 'none',
+      correct: false,
+      matchedCardId: null,
+    });
+  const stream = useSnapshot({
+    role: 'student',
+    lessonId: snapshot.lessonId,
+    studentId: snapshot.student.id,
+    epoch: 0,
+  });
+  const fresh =
+    stream.snapshot && 'progress' in stream.snapshot
+      ? mergeStudentSnapshot(snapshot, stream.snapshot)
+      : snapshot;
+  const editor = useProgressDraft(fresh),
+    audio = useRef<AudioContext | null>(null);
+  useEffect(
+    () => () => {
+      void audio.current?.close();
+    },
+    [],
+  );
+  async function home() {
+    if (await editor.goHome()) setMode(null);
+  }
+  function play() {
+    if (!sound || !audio.current || audio.current.state !== 'running') return;
+    const ctx = audio.current;
+    for (const [i, f] of [523, 659, 784].entries()) {
+      const osc = ctx.createOscillator(),
+        gain = ctx.createGain();
+      osc.frequency.value = f;
+      gain.gain.setValueAtTime(0.055, ctx.currentTime + i * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.1 + 0.18);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.1);
+      osc.stop(ctx.currentTime + i * 0.1 + 0.2);
+    }
+  }
+  useEffect(() => {
+    if (stream.connected) void editor.recover().catch(() => {});
+  }, [stream.connected]);
+  const current = {
+    ...fresh,
+    progress: editor.progress,
+    solvedCount: Math.max(solved, fresh.solvedCount),
+  };
+  const warning = (
+    <>
+      {fresh.phase !== 'active' && (
+        <p className="notice">
+          {fresh.phase === 'preparing'
+            ? '선생님이 수업을 준비하고 있어요. 잠시 기다려 주세요.'
+            : '수업이 끝났어요. 저장된 나의 하루를 볼 수 있어요.'}
+        </p>
+      )}
+      {editor.status === 'offline' && (
+        <p className="notice" role="status">
+          연결을 확인해 주세요. 작성 중인 내용은 이 화면에 남아 있어요. 새로고침하면 저장 전 내용은
+          사라질 수 있어요.
+        </p>
+      )}
+      {editor.error && (
+        <div className="notice error" role="alert">
+          <p>{editor.error}</p>
+          {editor.status === 'conflict' ? (
+            <>
+              <button className="secondary" onClick={() => editor.discardDraft()}>
+                저장된 내용 사용
+              </button>
+              {editor.canReapply && (
+                <button
+                  className="secondary"
+                  onClick={() => void editor.reapplyDraft().catch(() => {})}
+                >
+                  내 초안 다시 적용
+                </button>
+              )}
+            </>
+          ) : (
+            <button className="secondary" onClick={() => void editor.recover().catch(() => {})}>
+              다시 저장
+            </button>
+          )}{' '}
+          <button
+            className="ghost"
+            onClick={() => {
+              editor.discardDraft();
+              setMode(null);
+            }}
+          >
+            저장 안 된 변경 취소
+          </button>
+        </div>
+      )}
+    </>
+  );
+  if (!mode)
+    return (
+      <>
+        {warning}
+        <ModeMenu
+          studentName={`${snapshot.student.displayName} ${snapshot.student.distinction}`.trim()}
+          onSelect={setMode}
+          onChangeName={async () => {
+            if (await editor.goHome()) await onChangeName();
+          }}
+        />
+      </>
+    );
+  return (
+    <ModeShell
+      studentName={`${snapshot.student.displayName} ${snapshot.student.distinction}`.trim()}
+      onHome={home}
+    >
+      <div className="activity-status">
+        <ConnectionStatus connected={stream.connected} />
+        <span role="status">
+          {editor.status === 'saving'
+            ? '저장 중…'
+            : editor.status === 'saved'
+              ? '저장됨'
+              : editor.status === 'offline'
+                ? '연결 확인 중'
+                : '저장을 확인해 주세요'}
+        </span>
+        <SoundToggle
+          enabled={sound}
+          onToggle={() => {
+            if (!sound) {
+              audio.current ??= new AudioContext();
+              void audio.current.resume();
+            }
+            setSound(!sound);
+          }}
+        />
+      </div>
+      {warning}
+      {mode === 'practice' ? (
+        <PracticeView
+          snapshot={current}
+          draft={practice}
+          onDraft={setPractice}
+          onSolved={setSolved}
+          onSound={play}
+        />
+      ) : mode === 'sharing' ? (
+        <StudentShareView snapshot={current} />
+      ) : editor.progress.stage === 'reading' ? (
+        <ReadingView
+          snapshot={current}
+          progress={editor.progress}
+          onAnswer={editor.updateAnswer}
+          onCheck={() => editor.submit('check-times').catch(() => {})}
+          busy={editor.busy}
+        />
+      ) : editor.progress.stage === 'ordering' ? (
+        <OrderingView
+          snapshot={current}
+          progress={editor.progress}
+          onOrder={editor.updateOrder}
+          onCheck={() => editor.submit('check-order').catch(() => {})}
+          onReadAgain={() => editor.submit('return-to-reading').catch(() => {})}
+          busy={editor.busy || fresh.phase !== 'active'}
+        />
+      ) : (
+        <CompletedView
+          onShare={() => setMode('sharing')}
+          onReadAgain={() => editor.submit('return-to-reading').catch(() => {})}
+        />
+      )}
+    </ModeShell>
+  );
 }

@@ -1,6 +1,43 @@
-import React from 'react';import {it,expect,vi} from 'vitest';import {render,screen,fireEvent,waitFor} from '@testing-library/react';import {NamePicker} from '../../apps/web/src/auth/NamePicker';import {ModeMenu} from '../../apps/web/src/student/ModeMenu';
-const students=Array.from({length:6},(_,i)=>({id:`s${i}`,displayName:i<2?'별이':`친구 ${i}`,distinction:i<2?`${i+1}`:''}));
-it('same_name_uses_distinction_and_submits_stable_id',async()=>{const start=vi.fn(async()=>{});render(<NamePicker students={students} onStart={start}/>);fireEvent.click(screen.getByRole('button',{name:'별이 2'}));await waitFor(()=>expect(start).toHaveBeenCalledWith('s1'));});
-it('pending_selection_blocks_double_start',async()=>{let done:()=>void=()=>{};const start=vi.fn(()=>new Promise<void>(r=>done=r));render(<NamePicker students={students} onStart={start}/>);fireEvent.click(screen.getByRole('button',{name:'별이 1'}));expect(screen.getByRole('button',{name:'별이 2'})).toBeDisabled();done();});
-it('name_setup_escapes_markup',()=>{render(<NamePicker students={[{id:'s',displayName:'<script>bad</script>',distinction:''}]} onStart={async()=>{}}/>);expect(screen.getByText('<script>bad</script>')).toBeVisible();expect(document.querySelector('script')).toBeNull();});
-it('mode_menu_has_three_freely_selected_modes',()=>{const select=vi.fn();render(<ModeMenu studentName="별이" onSelect={select} onChangeName={async()=>{}}/>);for(const name of ['연습모드','실전모드','공유모드'])expect(screen.getByRole('button',{name:new RegExp(name)})).toBeEnabled();fireEvent.click(screen.getByRole('button',{name:/공유모드/}));expect(select).toHaveBeenCalledWith('sharing');expect(screen.getByText('별이')).toBeVisible();});
+import React from 'react';
+import { it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { NamePicker } from '../../apps/web/src/auth/NamePicker';
+import { ModeMenu } from '../../apps/web/src/student/ModeMenu';
+const students = Array.from({ length: 6 }, (_, i) => ({
+  id: `s${i}`,
+  displayName: i < 2 ? '별이' : `친구 ${i}`,
+  distinction: i < 2 ? `${i + 1}` : '',
+}));
+it('same_name_uses_distinction_and_submits_stable_id', async () => {
+  const start = vi.fn(async () => {});
+  render(<NamePicker students={students} onStart={start} />);
+  fireEvent.click(screen.getByRole('button', { name: '별이 2' }));
+  await waitFor(() => expect(start).toHaveBeenCalledWith('s1'));
+});
+it('pending_selection_blocks_double_start', async () => {
+  let done: () => void = () => {};
+  const start = vi.fn(() => new Promise<void>((r) => (done = r)));
+  render(<NamePicker students={students} onStart={start} />);
+  fireEvent.click(screen.getByRole('button', { name: '별이 1' }));
+  expect(screen.getByRole('button', { name: '별이 2' })).toBeDisabled();
+  done();
+});
+it('name_setup_escapes_markup', () => {
+  render(
+    <NamePicker
+      students={[{ id: 's', displayName: '<script>bad</script>', distinction: '' }]}
+      onStart={async () => {}}
+    />,
+  );
+  expect(screen.getByText('<script>bad</script>')).toBeVisible();
+  expect(document.querySelector('script')).toBeNull();
+});
+it('mode_menu_has_three_freely_selected_modes', () => {
+  const select = vi.fn();
+  render(<ModeMenu studentName="별이" onSelect={select} onChangeName={async () => {}} />);
+  for (const name of ['연습모드', '실전모드', '공유모드'])
+    expect(screen.getByRole('button', { name: new RegExp(name) })).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', { name: /공유모드/ }));
+  expect(select).toHaveBeenCalledWith('sharing');
+  expect(screen.getByText('별이')).toBeVisible();
+});

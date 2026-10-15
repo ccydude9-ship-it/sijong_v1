@@ -10,9 +10,7 @@
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
   "include": [
     "apps/**/*.ts",
@@ -20,6 +18,7 @@
     "packages/**/*.ts",
     "tests/**/*.ts",
     "tests/**/*.tsx",
-    "*.ts"
+    "*.ts",
+    "scripts/**/*.ts"
   ]
 }

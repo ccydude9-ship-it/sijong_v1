@@ -1,2 +1,36 @@
-import {Router} from 'express';import {requireRole} from '../auth/middleware';import type {EventHub} from './hub';import {fail} from '../errors';
-export function eventRoutes(hub:EventHub){const r=Router();r.get('/events',requireRole('teacher','student'),(req,res)=>{const s=res.locals.session,lessonId=s.role==='teacher'?(typeof req.query.lessonId==='string'?req.query.lessonId:hub.store.lessons.list()[0]?.id):s.lessonId;if(!lessonId||!hub.store.lessons.get(lessonId))fail(404,'수업을 찾을 수 없습니다');res.set({'Content-Type':'text/event-stream','Cache-Control':'no-cache, no-transform','Connection':'keep-alive','X-Accel-Buffering':'no'});res.flushHeaders();const timer=setInterval(()=>res.write(': heartbeat\n\n'),15000);timer.unref();const off=hub.subscribe({...s,lessonId},e=>res.write(`event: snapshot\ndata: ${JSON.stringify(e.data)}\n\n`),()=>res.end());req.on('close',()=>{clearInterval(timer);off();});});return r;}
+import { Router } from 'express';
+import { requireRole } from '../auth/middleware';
+import type { EventHub } from './hub';
+import { fail } from '../errors';
+export function eventRoutes(hub: EventHub) {
+  const r = Router();
+  r.get('/events', requireRole('teacher', 'student'), (req, res) => {
+    const s = res.locals.session,
+      lessonId =
+        s.role === 'teacher'
+          ? typeof req.query.lessonId === 'string'
+            ? req.query.lessonId
+            : hub.store.lessons.list()[0]?.id
+          : s.lessonId;
+    if (!lessonId || !hub.store.lessons.get(lessonId)) fail(404, '수업을 찾을 수 없습니다');
+    res.set({
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+    res.flushHeaders();
+    const timer = setInterval(() => res.write(': heartbeat\n\n'), 15000);
+    timer.unref();
+    const off = hub.subscribe(
+      { ...s, lessonId },
+      (e) => res.write(`event: snapshot\ndata: ${JSON.stringify(e.data)}\n\n`),
+      () => res.end(),
+    );
+    req.on('close', () => {
+      clearInterval(timer);
+      off();
+    });
+  });
+  return r;
+}

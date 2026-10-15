@@ -1,2 +1,62 @@
-import React,{useState} from 'react';import type {StudentSnapshot,StudentProgress,ClockTime} from '../../../../packages/contracts/src/index';import {ActivityCard} from '../components/ActivityCard';import {TimeInput} from '../components/TimeInput';
-export function ReadingView({snapshot,progress,onAnswer,onCheck,busy}:{snapshot:StudentSnapshot;progress:StudentProgress;onAnswer:(id:string,time:ClockTime)=>void;onCheck:()=>Promise<void>;busy:boolean}){const [flips,setFlips]=useState<Record<string,boolean>>({});const cards=progress.order.map(id=>snapshot.cards.find(c=>c.id===id)!).filter(Boolean);return <section><header className="page-heading"><span className="eyebrow">실전모드 · STEP 01</span><h1>착착! 시각을 읽어요</h1><p>내 카드를 뒤집고, 시계가 가리키는 시각을 골라요.</p></header><div className="reading-grid">{cards.map(c=><article className="reading-card" data-testid={`reading-${c.id}`} key={c.id}><ActivityCard card={c} flipped={!!flips[c.id]} onFlip={()=>setFlips(v=>({...v,[c.id]:!v[c.id]}))}/><TimeInput value={progress.answers[c.id]??null} onChange={t=>onAnswer(c.id,t)} error={progress.wrongTimeIds.includes(c.id)} disabled={busy||snapshot.phase!=='active'}/></article>)}</div><div className="activity-actions"><p className="subtle">입력한 시각을 확인하고 다음 활동으로 가요.</p><button className="primary" disabled={busy||snapshot.phase!=='active'} onClick={()=>void onCheck()}>{busy?'확인하는 중…':'시각 확인하기'}</button></div></section>;}
+import React, { useState } from 'react';
+import type {
+  StudentSnapshot,
+  StudentProgress,
+  ClockTime,
+} from '../../../../packages/contracts/src/index';
+import { ActivityCard } from '../components/ActivityCard';
+import { TimeInput } from '../components/TimeInput';
+export function ReadingView({
+  snapshot,
+  progress,
+  onAnswer,
+  onCheck,
+  busy,
+}: {
+  snapshot: StudentSnapshot;
+  progress: StudentProgress;
+  onAnswer: (id: string, time: ClockTime) => void;
+  onCheck: () => Promise<void>;
+  busy: boolean;
+}) {
+  const [flips, setFlips] = useState<Record<string, boolean>>({});
+  const cards = progress.order
+    .map((id) => snapshot.cards.find((c) => c.id === id)!)
+    .filter(Boolean);
+  return (
+    <section>
+      <header className="page-heading">
+        <span className="eyebrow">실전모드 · STEP 01</span>
+        <h1>착착! 시각을 읽어요</h1>
+        <p>내 카드를 뒤집고, 시계가 가리키는 시각을 골라요.</p>
+      </header>
+      <div className="reading-grid">
+        {cards.map((c) => (
+          <article className="reading-card" data-testid={`reading-${c.id}`} key={c.id}>
+            <ActivityCard
+              card={c}
+              flipped={!!flips[c.id]}
+              onFlip={() => setFlips((v) => ({ ...v, [c.id]: !v[c.id] }))}
+            />
+            <TimeInput
+              value={progress.answers[c.id] ?? null}
+              onChange={(t) => onAnswer(c.id, t)}
+              error={progress.wrongTimeIds.includes(c.id)}
+              disabled={busy || snapshot.phase !== 'active'}
+            />
+          </article>
+        ))}
+      </div>
+      <div className="activity-actions">
+        <p className="subtle">입력한 시각을 확인하고 다음 활동으로 가요.</p>
+        <button
+          className="primary"
+          disabled={busy || snapshot.phase !== 'active'}
+          onClick={() => void onCheck()}
+        >
+          {busy ? '확인하는 중…' : '시각 확인하기'}
+        </button>
+      </div>
+    </section>
+  );
+}

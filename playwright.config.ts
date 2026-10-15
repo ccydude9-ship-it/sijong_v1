@@ -1,2 +1,31 @@
-import {defineConfig,devices} from '@playwright/test';import {existsSync} from 'node:fs';
-export default defineConfig({testDir:'tests/e2e',timeout:60000,fullyParallel:false,workers:1,retries:0,reporter:'list',use:{viewport:{width:1024,height:768},trace:'retain-on-failure',screenshot:'only-on-failure'},projects:[{name:'chromium',use:{...devices['Desktop Chrome'],viewport:{width:1024,height:768},launchOptions:existsSync('/usr/bin/chromium')?{executablePath:'/usr/bin/chromium',args:['--no-sandbox']}:undefined}},{name:'webkit',use:{...devices['Desktop Safari'],viewport:{width:1024,height:768}}}]});
+import { defineConfig, devices } from '@playwright/test';
+import { existsSync } from 'node:fs';
+export default defineConfig({
+  testDir: 'tests/e2e',
+  timeout: 60000,
+  fullyParallel: false,
+  workers: 1,
+  retries: 0,
+  reporter: 'list',
+  use: {
+    viewport: { width: 1024, height: 768 },
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1024, height: 768 },
+        launchOptions: existsSync('/usr/bin/chromium')
+          ? { executablePath: '/usr/bin/chromium', args: ['--no-sandbox'] }
+          : undefined,
+      },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'], viewport: { width: 1024, height: 768 } },
+    },
+  ],
+});

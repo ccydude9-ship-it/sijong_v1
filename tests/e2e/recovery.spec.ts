@@ -1,5 +1,97 @@
-import {test,expect,studentPage} from '../helpers/browser';
-test('offline home preserves draft and reconnect plus reload restores confirmed progress',async({page,classroom:c})=>{c.store.lessons.set({...c.store.lessons.get(c.lessonId)!,phase:'active'});const student=c.students[0],card=c.store.students.cards(student.id)[0];await studentPage(page,c,student);await page.getByRole('button',{name:/실전모드/}).click();await page.context().setOffline(true);await page.getByTestId(`reading-${card.id}`).getByRole('button',{name:'5시',exact:true}).click();await page.getByRole('button',{name:'홈으로 돌아가기'}).click();await page.getByRole('button',{name:/실전모드/}).click();await expect(page.getByTestId(`reading-${card.id}`).getByRole('button',{name:'5시',exact:true})).toHaveAttribute('aria-pressed','true');await page.context().setOffline(false);await expect.poll(()=>c.store.progress.get(student.id).answers[card.id]?.hour).toBe(5);await page.reload();await page.getByRole('button',{name:'게임 시작'}).click();await page.getByRole('button',{name:student.displayName,exact:true}).click();await page.getByRole('button',{name:/실전모드/}).click();await expect(page.getByTestId(`reading-${card.id}`).getByRole('button',{name:'5시',exact:true})).toHaveAttribute('aria-pressed','true');});
-test('lost saved response retries same operation without duplicate mutation',async({page,classroom:c})=>{c.store.lessons.set({...c.store.lessons.get(c.lessonId)!,phase:'active'});const student=c.students[0],card=c.store.students.cards(student.id)[0],operations:string[]=[];await studentPage(page,c,student);await page.getByRole('button',{name:/실전모드/}).click();let abortFirst=true;await page.route('**/api/student/progress',async route=>{operations.push(route.request().postDataJSON().operationId);const response=await route.fetch();if(abortFirst){abortFirst=false;await route.abort('failed');}else await route.fulfill({response});});await page.getByTestId(`reading-${card.id}`).getByRole('button',{name:'5시',exact:true}).click();await expect(page.getByRole('button',{name:'다시 저장',exact:true})).toBeVisible();await page.getByRole('button',{name:'다시 저장',exact:true}).click();await expect(page.getByRole('alert')).toHaveCount(0);expect(operations).toHaveLength(2);expect(operations[0]).toBe(operations[1]);expect(c.store.progress.get(student.id).revision).toBe(1);});
-test('server restart preserves session artwork and progress',async({page,classroom:c})=>{c.store.lessons.set({...c.store.lessons.get(c.lessonId)!,phase:'active'});const student=c.students[0],card=c.store.students.cards(student.id)[0];await studentPage(page,c,student);await page.getByRole('button',{name:/실전모드/}).click();await page.getByTestId(`reading-${card.id}`).getByRole('button',{name:'6시',exact:true}).click();await expect.poll(()=>c.store.progress.get(student.id).answers[card.id]?.hour).toBe(6);await c.restart();await page.reload();await page.getByRole('button',{name:'게임 시작'}).click();await page.getByRole('button',{name:student.displayName,exact:true}).click();await page.getByRole('button',{name:/실전모드/}).click();await expect(page.getByTestId(`reading-${card.id}`).getByRole('button',{name:'6시',exact:true})).toHaveAttribute('aria-pressed','true');await expect(page.getByTestId(`reading-${card.id}`).locator('img')).toHaveJSProperty('complete',true);});
-test('ending lesson updates student controls immediately',async({page,classroom:c})=>{c.store.lessons.set({...c.store.lessons.get(c.lessonId)!,phase:'active'});await studentPage(page,c,c.students[0]);await page.getByRole('button',{name:/실전모드/}).click();c.app.locals.lessons.changePhase(c.lessonId,{operationId:crypto.randomUUID(),expectedRevision:0,phase:'ended',confirmIncomplete:true});await expect(page.getByText('수업이 끝났어요. 저장된 나의 하루를 볼 수 있어요.')).toBeVisible();await expect(page.getByRole('button',{name:'시각 확인하기'})).toBeDisabled();});
+import { test, expect, studentPage } from '../helpers/browser';
+test('offline home preserves draft and reconnect plus reload restores confirmed progress', async ({
+  page,
+  classroom: c,
+}) => {
+  c.store.lessons.set({ ...c.store.lessons.get(c.lessonId)!, phase: 'active' });
+  const student = c.students[0],
+    card = c.store.students.cards(student.id)[0];
+  await studentPage(page, c, student);
+  await page.getByRole('button', { name: /실전모드/ }).click();
+  await page.context().setOffline(true);
+  await page
+    .getByTestId(`reading-${card.id}`)
+    .getByRole('button', { name: '5시', exact: true })
+    .click();
+  await page.getByRole('button', { name: '홈으로 돌아가기' }).click();
+  await page.getByRole('button', { name: /실전모드/ }).click();
+  await expect(
+    page.getByTestId(`reading-${card.id}`).getByRole('button', { name: '5시', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await page.context().setOffline(false);
+  await expect.poll(() => c.store.progress.get(student.id).answers[card.id]?.hour).toBe(5);
+  await page.reload();
+  await page.getByRole('button', { name: '게임 시작' }).click();
+  await page.getByRole('button', { name: student.displayName, exact: true }).click();
+  await page.getByRole('button', { name: /실전모드/ }).click();
+  await expect(
+    page.getByTestId(`reading-${card.id}`).getByRole('button', { name: '5시', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+});
+test('lost saved response retries same operation without duplicate mutation', async ({
+  page,
+  classroom: c,
+}) => {
+  c.store.lessons.set({ ...c.store.lessons.get(c.lessonId)!, phase: 'active' });
+  const student = c.students[0],
+    card = c.store.students.cards(student.id)[0],
+    operations: string[] = [];
+  await studentPage(page, c, student);
+  await page.getByRole('button', { name: /실전모드/ }).click();
+  let abortFirst = true;
+  await page.route('**/api/student/progress', async (route) => {
+    operations.push(route.request().postDataJSON().operationId);
+    const response = await route.fetch();
+    if (abortFirst) {
+      abortFirst = false;
+      await route.abort('failed');
+    } else await route.fulfill({ response });
+  });
+  await page
+    .getByTestId(`reading-${card.id}`)
+    .getByRole('button', { name: '5시', exact: true })
+    .click();
+  await expect(page.getByRole('button', { name: '다시 저장', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '다시 저장', exact: true }).click();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  expect(operations).toHaveLength(2);
+  expect(operations[0]).toBe(operations[1]);
+  expect(c.store.progress.get(student.id).revision).toBe(1);
+});
+test('server restart preserves session artwork and progress', async ({ page, classroom: c }) => {
+  c.store.lessons.set({ ...c.store.lessons.get(c.lessonId)!, phase: 'active' });
+  const student = c.students[0],
+    card = c.store.students.cards(student.id)[0];
+  await studentPage(page, c, student);
+  await page.getByRole('button', { name: /실전모드/ }).click();
+  await page
+    .getByTestId(`reading-${card.id}`)
+    .getByRole('button', { name: '6시', exact: true })
+    .click();
+  await expect.poll(() => c.store.progress.get(student.id).answers[card.id]?.hour).toBe(6);
+  await c.restart();
+  await page.reload();
+  await page.getByRole('button', { name: '게임 시작' }).click();
+  await page.getByRole('button', { name: student.displayName, exact: true }).click();
+  await page.getByRole('button', { name: /실전모드/ }).click();
+  await expect(
+    page.getByTestId(`reading-${card.id}`).getByRole('button', { name: '6시', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId(`reading-${card.id}`).locator('img')).toHaveJSProperty(
+    'complete',
+    true,
+  );
+});
+test('ending lesson updates student controls immediately', async ({ page, classroom: c }) => {
+  c.store.lessons.set({ ...c.store.lessons.get(c.lessonId)!, phase: 'active' });
+  await studentPage(page, c, c.students[0]);
+  await page.getByRole('button', { name: /실전모드/ }).click();
+  c.app.locals.lessons.changePhase(c.lessonId, {
+    operationId: crypto.randomUUID(),
+    expectedRevision: 0,
+    phase: 'ended',
+    confirmIncomplete: true,
+  });
+  await expect(page.getByText('수업이 끝났어요. 저장된 나의 하루를 볼 수 있어요.')).toBeVisible();
+  await expect(page.getByRole('button', { name: '시각 확인하기' })).toBeDisabled();
+});

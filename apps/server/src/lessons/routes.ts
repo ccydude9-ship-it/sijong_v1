@@ -1,2 +1,28 @@
-import {Router} from 'express';import {LessonService} from './service';import {phaseSchema,studentSetupSchema} from '../../../../packages/contracts/src/index';import {fail} from '../errors';
-export function lessonRoutes(service:LessonService){const r=Router();r.get('/lessons',(_req,res)=>res.json(service.store.lessons.list().map(({codeHash,...l})=>l)));r.post('/lessons',async(_req,res)=>res.status(201).json(await service.create()));r.get('/lessons/:id',(req,res)=>res.json(service.getTeacherLesson(req.params.id)));r.put('/lessons/:id/students/:slot',(req,res)=>{const student=service.store.students.list(req.params.id).find(s=>s.slot===Number(req.params.slot));if(!student)fail(404,'학생을 찾을 수 없습니다');res.json(service.updateStudent(req.params.id,student.id,studentSetupSchema.parse(req.body)));});r.post('/lessons/:id/code',(req,res)=>res.json(service.rotateCode(req.params.id)));r.post('/lessons/:id/phase',(req,res)=>res.json(service.changePhase(req.params.id,phaseSchema.parse(req.body))));r.delete('/lessons/:id',async(req,res)=>{await service.delete(req.params.id);res.json({ok:true});});return r;}
+import { Router } from 'express';
+import { LessonService } from './service';
+import { phaseSchema, studentSetupSchema } from '../../../../packages/contracts/src/index';
+import { fail } from '../errors';
+export function lessonRoutes(service: LessonService) {
+  const r = Router();
+  r.get('/lessons', (_req, res) =>
+    res.json(service.store.lessons.list().map(({ codeHash, ...l }) => l)),
+  );
+  r.post('/lessons', async (_req, res) => res.status(201).json(await service.create()));
+  r.get('/lessons/:id', (req, res) => res.json(service.getTeacherLesson(req.params.id)));
+  r.put('/lessons/:id/students/:slot', (req, res) => {
+    const student = service.store.students
+      .list(req.params.id)
+      .find((s) => s.slot === Number(req.params.slot));
+    if (!student) fail(404, '학생을 찾을 수 없습니다');
+    res.json(service.updateStudent(req.params.id, student.id, studentSetupSchema.parse(req.body)));
+  });
+  r.post('/lessons/:id/code', (req, res) => res.json(service.rotateCode(req.params.id)));
+  r.post('/lessons/:id/phase', (req, res) =>
+    res.json(service.changePhase(req.params.id, phaseSchema.parse(req.body))),
+  );
+  r.delete('/lessons/:id', async (req, res) => {
+    await service.delete(req.params.id);
+    res.json({ ok: true });
+  });
+  return r;
+}

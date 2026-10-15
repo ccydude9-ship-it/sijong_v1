@@ -1,14 +1,143 @@
-import {afterEach,it,expect} from 'vitest';import {createServerFixture,loginTeacher} from '../helpers/server';import {hashValue} from '../../apps/server/src/auth/crypto';
-let f:Awaited<ReturnType<typeof createServerFixture>>;afterEach(async()=>{await f?.cleanup();});
-async function setup(){f=await createServerFixture();const code=crypto.randomUUID().slice(0,8);const l=f.store.lessons.get(f.lessonId)!;f.store.lessons.set({...l,codeHash:f.app.locals.auth.codeHash(code)});return code;}
-async function device(){const code=await setup(),r=await f.client.post('/api/auth/classroom').set('Origin',f.config.publicOrigin).send({code});return {cookie:r.headers['set-cookie'][0].split(';')[0],csrf:r.body.csrfToken};}
-it('classroom_session_sees_roster_only',async()=>{const d=await device(),r=await f.client.get('/api/classroom/students').set('Cookie',d.cookie);expect(r.status).toBe(200);expect(r.body).toHaveLength(6);expect(Object.keys(r.body[0]).sort()).toEqual(['displayName','distinction','id']);expect((await f.client.get('/api/student/state').set('Cookie',d.cookie)).status).toBe(403);});
-it('selected_id_scopes_student',async()=>{const d=await device(),id=f.store.students.list(f.lessonId)[0].id;const r=await f.client.post('/api/auth/student').set('Cookie',d.cookie).set('Origin',f.config.publicOrigin).set('X-CSRF-Token',d.csrf).send({studentId:id});expect(r.status).toBe(200);expect(r.body.studentId).toBe(id);expect(r.headers['set-cookie'][0]).toContain('HttpOnly');expect((await f.client.get('/api/session').set('Cookie',d.cookie)).status).toBe(401);});
-it('teacher_login_is_separate',async()=>{const d=await device();expect((await f.client.get('/api/teacher/lessons').set('Cookie',d.cookie)).status).toBe(403);const t=await loginTeacher(f);expect((await f.client.get('/api/session').set('Cookie',t.cookie)).body.role).toBe('teacher');});
-it('lesson_revocation_and_logout_revoke_sessions',async()=>{const d=await device();f.app.locals.auth.revokeLessonSessions(f.lessonId);expect((await f.client.get('/api/session').set('Cookie',d.cookie)).status).toBe(401);const t=await loginTeacher(f);expect((await f.client.post('/api/auth/logout').set('Cookie',t.cookie).set('Origin',f.config.publicOrigin).set('X-CSRF-Token',t.csrf)).status).toBe(200);expect((await f.client.get('/api/session').set('Cookie',t.cookie)).status).toBe(401);});
-it('expired_session_is_401',async()=>{const d=await device();const s=f.store.sessions.list()[0];f.store.sessions.delete(s.id);f.store.sessions.set({...s,expiresAt:0});expect((await f.client.get('/api/session').set('Cookie',d.cookie)).status).toBe(401);});
-it('cross_origin_or_missing_csrf_is_rejected',async()=>{const d=await device();expect((await f.client.post('/api/auth/student').set('Cookie',d.cookie).set('Origin','https://invalid.example').send({studentId:'x'})).status).toBe(403);expect((await f.client.post('/api/auth/student').set('Cookie',d.cookie).set('Origin',f.config.publicOrigin).send({studentId:'x'})).status).toBe(403);});
-it('tokens_are_hashed_at_rest',async()=>{const d=await device(),token=d.cookie.split('=')[1],stored=f.store.sessions.find(hashValue(token))!;expect(stored.tokenHash).not.toBe(token);expect(JSON.stringify(stored)).not.toContain(token);expect(stored.expiresAt-Date.now()).toBeLessThanOrEqual(8*3600000);});
-it('teacher_bootstrap_requires_password',async()=>{await setup();f.store.run("DELETE FROM settings WHERE key='teacher-password'");expect(()=>f.app.locals.auth.bootstrapTeacher('')).toThrow();});
-it('limits_repeated_failed_login',async()=>{await setup();for(let i=0;i<5;i++)expect((await f.client.post('/api/auth/classroom').set('Origin',f.config.publicOrigin).send({code:'wrong'})).status).toBe(401);expect((await f.client.post('/api/auth/classroom').set('Origin',f.config.publicOrigin).send({code:'wrong'})).status).toBe(429);});
-it('ip_limit_cannot_be_bypassed_with_other_codes',async()=>{await setup();for(let i=0;i<20;i++)await f.client.post('/api/auth/classroom').set('Origin',f.config.publicOrigin).send({code:`wrong${i}`});expect((await f.client.post('/api/auth/classroom').set('Origin',f.config.publicOrigin).send({code:'another'})).status).toBe(429);});
+import { afterEach, it, expect } from 'vitest';
+import { createServerFixture, loginTeacher } from '../helpers/server';
+import { hashValue } from '../../apps/server/src/auth/crypto';
+let f: Awaited<ReturnType<typeof createServerFixture>>;
+afterEach(async () => {
+  await f?.cleanup();
+});
+async function setup() {
+  f = await createServerFixture();
+  const code = crypto.randomUUID().slice(0, 8);
+  const l = f.store.lessons.get(f.lessonId)!;
+  f.store.lessons.set({ ...l, codeHash: f.app.locals.auth.codeHash(code) });
+  return code;
+}
+async function device() {
+  const code = await setup(),
+    r = await f.client
+      .post('/api/auth/classroom')
+      .set('Origin', f.config.publicOrigin)
+      .send({ code });
+  return { cookie: r.headers['set-cookie'][0].split(';')[0], csrf: r.body.csrfToken };
+}
+it('classroom_session_sees_roster_only', async () => {
+  const d = await device(),
+    r = await f.client.get('/api/classroom/students').set('Cookie', d.cookie);
+  expect(r.status).toBe(200);
+  expect(r.body).toHaveLength(6);
+  expect(Object.keys(r.body[0]).sort()).toEqual(['displayName', 'distinction', 'id']);
+  expect((await f.client.get('/api/student/state').set('Cookie', d.cookie)).status).toBe(403);
+});
+it('selected_id_scopes_student', async () => {
+  const d = await device(),
+    id = f.store.students.list(f.lessonId)[0].id;
+  const r = await f.client
+    .post('/api/auth/student')
+    .set('Cookie', d.cookie)
+    .set('Origin', f.config.publicOrigin)
+    .set('X-CSRF-Token', d.csrf)
+    .send({ studentId: id });
+  expect(r.status).toBe(200);
+  expect(r.body.studentId).toBe(id);
+  expect(r.headers['set-cookie'][0]).toContain('HttpOnly');
+  expect((await f.client.get('/api/session').set('Cookie', d.cookie)).status).toBe(401);
+});
+it('teacher_login_is_separate', async () => {
+  const d = await device();
+  expect((await f.client.get('/api/teacher/lessons').set('Cookie', d.cookie)).status).toBe(403);
+  const t = await loginTeacher(f);
+  expect((await f.client.get('/api/session').set('Cookie', t.cookie)).body.role).toBe('teacher');
+});
+it('lesson_revocation_and_logout_revoke_sessions', async () => {
+  const d = await device();
+  f.app.locals.auth.revokeLessonSessions(f.lessonId);
+  expect((await f.client.get('/api/session').set('Cookie', d.cookie)).status).toBe(401);
+  const t = await loginTeacher(f);
+  expect(
+    (
+      await f.client
+        .post('/api/auth/logout')
+        .set('Cookie', t.cookie)
+        .set('Origin', f.config.publicOrigin)
+        .set('X-CSRF-Token', t.csrf)
+    ).status,
+  ).toBe(200);
+  expect((await f.client.get('/api/session').set('Cookie', t.cookie)).status).toBe(401);
+});
+it('expired_session_is_401', async () => {
+  const d = await device();
+  const s = f.store.sessions.list()[0];
+  f.store.sessions.delete(s.id);
+  f.store.sessions.set({ ...s, expiresAt: 0 });
+  expect((await f.client.get('/api/session').set('Cookie', d.cookie)).status).toBe(401);
+});
+it('cross_origin_or_missing_csrf_is_rejected', async () => {
+  const d = await device();
+  expect(
+    (
+      await f.client
+        .post('/api/auth/student')
+        .set('Cookie', d.cookie)
+        .set('Origin', 'https://invalid.example')
+        .send({ studentId: 'x' })
+    ).status,
+  ).toBe(403);
+  expect(
+    (
+      await f.client
+        .post('/api/auth/student')
+        .set('Cookie', d.cookie)
+        .set('Origin', f.config.publicOrigin)
+        .send({ studentId: 'x' })
+    ).status,
+  ).toBe(403);
+});
+it('tokens_are_hashed_at_rest', async () => {
+  const d = await device(),
+    token = d.cookie.split('=')[1],
+    stored = f.store.sessions.find(hashValue(token))!;
+  expect(stored.tokenHash).not.toBe(token);
+  expect(JSON.stringify(stored)).not.toContain(token);
+  expect(stored.expiresAt - Date.now()).toBeLessThanOrEqual(8 * 3600000);
+});
+it('teacher_bootstrap_requires_password', async () => {
+  await setup();
+  f.store.run("DELETE FROM settings WHERE key='teacher-password'");
+  expect(() => f.app.locals.auth.bootstrapTeacher('')).toThrow();
+});
+it('limits_repeated_failed_login', async () => {
+  await setup();
+  for (let i = 0; i < 5; i++)
+    expect(
+      (
+        await f.client
+          .post('/api/auth/classroom')
+          .set('Origin', f.config.publicOrigin)
+          .send({ code: 'wrong' })
+      ).status,
+    ).toBe(401);
+  expect(
+    (
+      await f.client
+        .post('/api/auth/classroom')
+        .set('Origin', f.config.publicOrigin)
+        .send({ code: 'wrong' })
+    ).status,
+  ).toBe(429);
+});
+it('ip_limit_cannot_be_bypassed_with_other_codes', async () => {
+  await setup();
+  for (let i = 0; i < 20; i++)
+    await f.client
+      .post('/api/auth/classroom')
+      .set('Origin', f.config.publicOrigin)
+      .send({ code: `wrong${i}` });
+  expect(
+    (
+      await f.client
+        .post('/api/auth/classroom')
+        .set('Origin', f.config.publicOrigin)
+        .send({ code: 'another' })
+    ).status,
+  ).toBe(429);
+});

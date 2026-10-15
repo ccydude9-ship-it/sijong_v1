@@ -1,4 +1,29 @@
-import type {ErrorRequestHandler} from 'express';import {ZodError} from 'zod';
-export class HttpError extends Error{constructor(public status:number,message:string,public details?:unknown){super(message);}}
-export function fail(status:number,message:string,details?:unknown):never{throw new HttpError(status,message,details);}
-export const errorHandler:ErrorRequestHandler=(error,_req,res,_next)=>{if(res.headersSent)return;if(error instanceof HttpError){res.status(error.status).json({message:error.message,details:error.details});}else if(error instanceof ZodError){res.status(400).json({message:'입력한 내용을 확인해 주세요',fields:error.issues.map(i=>i.path.join('.'))});}else if(error?.type==='entity.too.large'){res.status(413).json({message:'파일이 너무 큽니다'});}else{res.status(500).json({message:'저장하지 못했어요. 잠시 후 다시 시도해 주세요'});}};
+import type { ErrorRequestHandler } from 'express';
+import { ZodError } from 'zod';
+export class HttpError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+    public details?: unknown,
+  ) {
+    super(message);
+  }
+}
+export function fail(status: number, message: string, details?: unknown): never {
+  throw new HttpError(status, message, details);
+}
+export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
+  if (res.headersSent) return;
+  if (error instanceof HttpError) {
+    res.status(error.status).json({ message: error.message, details: error.details });
+  } else if (error instanceof ZodError) {
+    res.status(400).json({
+      message: '입력한 내용을 확인해 주세요',
+      fields: error.issues.map((i) => i.path.join('.')),
+    });
+  } else if (error?.type === 'entity.too.large') {
+    res.status(413).json({ message: '파일이 너무 큽니다' });
+  } else {
+    res.status(500).json({ message: '저장하지 못했어요. 잠시 후 다시 시도해 주세요' });
+  }
+};

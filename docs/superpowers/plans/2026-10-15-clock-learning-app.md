@@ -58,16 +58,17 @@
 - [x] **1. Failing tests:** runner와 workspace 설정만 먼저 준비한다. `tests/helpers/cards.ts`에 `makeValidCards(studentId='s1'):Card[]`를 만들고, 고정 ID `c1`~`c8`, 하루 시각 `[420,450,480,720,900,1080,1170,1230]`, 첫 카드 wake·마지막 카드 sleep·나머지 custom, 가상 title·imageId를 사용한다. 다음 assertion을 포함한 domain tests를 작성한다.
 
 ```ts
-expect(toMinuteOfDay({hour:12,minute:0},'am')).toBe(0);
-expect(toMinuteOfDay({hour:12,minute:30},'pm')).toBe(750);
-expect(handAngles({hour:3,minute:30})).toEqual({hour:105,minute:180});
+expect(toMinuteOfDay({ hour: 12, minute: 0 }, 'am')).toBe(0);
+expect(toMinuteOfDay({ hour: 12, minute: 30 }, 'pm')).toBe(750);
+expect(handAngles({ hour: 3, minute: 30 })).toEqual({ hour: 105, minute: 180 });
 const cards = makeValidCards();
-expect(gradeOrder(cards,['c2','c1','c3','c4','c5','c6','c7','c8'])).toEqual(['c2','c1']);
-const amAndPmCards = [cards[0], {...cards[0],id:'pm-card',minuteOfDay:1140}];
-expect(matchPracticeCard(amAndPmCards,{hour:7,minute:0})?.id).toBe('c1');
+expect(gradeOrder(cards, ['c2', 'c1', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8'])).toEqual(['c2', 'c1']);
+const amAndPmCards = [cards[0], { ...cards[0], id: 'pm-card', minuteOfDay: 1140 }];
+expect(matchPracticeCard(amAndPmCards, { hour: 7, minute: 0 })?.id).toBe('c1');
 ```
 
 추가 테스트명: `rejects_out_of_range_time`, `requires_exactly_eight_unique_cards`, `requires_wake_before_sleep`, `rejects_missing_duplicate_or_foreign_order_ids`, `marks_only_wrong_time_ids`, `covers_all_24_clock_faces`.
+
 - [x] **2. Red:** `/workspace/sijong_v1`에서 위 구성에 필요한 의존성만 설치하고 `npm test -- tests/domain` 실행. domain export 미구현으로 실패하는지 확인한다. 테스트 0개 통과는 인정하지 않는다.
 - [x] **3. Implement:** 위 정확한 함수와 타입을 구현한다. contracts는 Zod 요청 스키마와 수업·실전 단계 enum을 제공한다. 이름 선택과 학급 연결 역할을 별도 구분한다. `.nvmrc`는 검증된 24.19.0, engines는 Node `>=24 <25`로 지정한다. 모든 새로운 의존성은 실제 설치 가능한 호환 버전으로 lockfile에 고정하고 기존 문서는 수정하지 않는다.
 - [x] **4. Green:** `npm test -- tests/domain`과 `npm run typecheck`. 전환·범위·카드 판정 테스트가 모두 실행돼 통과해야 한다.
@@ -193,38 +194,41 @@ expect(matchPracticeCard(amAndPmCards,{hour:7,minute:0})?.id).toBe('c1');
 - [ ] **4. Green:** component and E2E suites pass in Chromium and WebKit, tests actually execute for 6 student contexts plus teacher. Verify response-loss scenarios with aborted responses after real server commit, not fabricated progress states.
 - [x] **5. Commit:** `feat: share live classroom progress and recover interrupted sessions`.
 
-
 ## Task 12: 제품 실행·운영 명령·최종 검증
 
 **Files:** Create `apps/server/src/{main,shutdown}.ts`, `apps/server/src/cli/{seed-demo,teacher-password,backup}.ts`, `tests/server/operations.test.ts`, `tests/e2e/production.spec.ts`, `.github/workflows/ci.yml`, `.env.example`; Modify `README.md`, `docs/IMPLEMENTATION_CHECKLIST.md`, root npm scripts and workspace build configs.
 
 **Interfaces:** `startServer(config:Config):Promise<{url:string;close():Promise<void>}>`; Config includes `port`, `host`, `publicOrigin`, `dbPath`, `uploadDir`, `teacherPassword?`, `secureCookies`, `keyPath`. Runtime env names: `PORT`(3000), `HOST`(127.0.0.1), `SIJONG_PUBLIC_ORIGIN`, `SIJONG_DATA_DIR`(.local), `SIJONG_TEACHER_PASSWORD`(initial bootstrap only). `backupStore(store:Store,targetDir:string):Promise<{dbFile:string;manifestFile:string}>` uses SQLite backup API and a consistent asset/key manifest; backup dir is private and outside web roots. Admin password command reads new secret from environment or masked stdin, never CLI arguments/logging.
 
-- [ ] **1. Failing tests:** `production_serves_spa_and_health`, `unknown_api_is_json_404`, `bootstrap_missing_password_fails`, `existing_db_does_not_reset_password`, `graceful_close_releases_sse_and_db`, `backup_reopens_with_images_and_key`, `delete_lesson_keeps_other_references`, `seed_does_not_destroy_real_lesson`, `production_cookie_requires_https_origin`. Use external test fixtures for credentials, never committed usable credentials.
-- [ ] **2. Red:** run `npm test -- tests/server/operations.test.ts` and production E2E against built app; confirm failures are missing behavior, not a silently skipped build or zero tests.
-- [ ] **3. Implement:** production server serves Vite build with API before SPA fallback, JSON 404 for unknown APIs, writable storage checks, no secret logs. Admin CLI safely seeds examples, changes password and revokes teacher sessions, writes restorable backup; refuse concurrent destructive admin operations. Back up image set and key consistently with database snapshot, either while stopped or under a coordinated exclusive write barrier. CI uses Node 24, npm ci, typecheck, tests, build, Playwright browser installs and meaningful E2E. `.env.example` contains names and nonsecret defaults, no credentials. README provides beginner steps for teacher setup, example-to-real image replacement and device name selection; deployment instructions state HTTPS/persistent disk/single process.
+- [x] **1. Failing tests:** `production_serves_spa_and_health`, `unknown_api_is_json_404`, `bootstrap_missing_password_fails`, `existing_db_does_not_reset_password`, `graceful_close_releases_sse_and_db`, `backup_reopens_with_images_and_key`, `delete_lesson_keeps_other_references`, `seed_does_not_destroy_real_lesson`, `production_cookie_requires_https_origin`. Use external test fixtures for credentials, never committed usable credentials.
+- [x] **2. Red:** run `npm test -- tests/server/operations.test.ts` and production E2E against built app; confirm failures are missing behavior, not a silently skipped build or zero tests.
+- [x] **3. Implement:** production server serves Vite build with API before SPA fallback, JSON 404 for unknown APIs, writable storage checks, no secret logs. Admin CLI safely seeds examples, changes password and revokes teacher sessions, writes restorable backup; refuse concurrent destructive admin operations. Back up image set and key consistently with database snapshot, either while stopped or under a coordinated exclusive write barrier. CI uses Node 24, npm ci, typecheck, tests, build, Playwright browser installs and meaningful E2E. `.env.example` contains names and nonsecret defaults, no credentials. README provides beginner steps for teacher setup, example-to-real image replacement and device name selection; deployment instructions state HTTPS/persistent disk/single process.
 - [ ] **4. Green and actual run:** from repo root, run `npm ci`, `npm run typecheck`, `npm test`, `npm run test:web`, `npm run build`, `npm run test:e2e`. Start the built server with temporary synthetic configuration, GET health and run representative teacher-device-name-practice-practical-share flow. Run backup→restore→login→image read against a separate temp directory. Stop only started processes and verify Git diff for unintended files. Record exact executed/passed/failed/skipped counts; no readiness claim for unrun required checks.
-- [ ] **5. Document, persist and commit:** update implementation checklist only for demonstrated behaviors, keeping student usability and 40-minute classroom rehearsal unchecked. Save tested cloud `install_script` and `start_skill` using configuration tools; startup includes working directory, Node activation, credential initialization and health check, and reuse of current checkout with no worktree. Check existing bindings by presence/name before requiring local teacher credential setup; never put secrets in scripts. Proxy-injected network secrets must not be treated as raw local password values. Require no new external account for synthetic validation. Commit `feat: document and verify the runnable classroom app` after all relevant checks; report current-instance validation separately from configuration publication and actual classroom deployment.
+- [x] **5. Document, persist and commit:** update implementation checklist only for demonstrated behaviors, keeping student usability and 40-minute classroom rehearsal unchecked. Save tested cloud `install_script` and `start_skill` using configuration tools; startup includes working directory, Node activation, credential initialization and health check, and reuse of current checkout with no worktree. Check existing bindings by presence/name before requiring local teacher credential setup; never put secrets in scripts. Proxy-injected network secrets must not be treated as raw local password values. Require no new external account for synthetic validation. Commit `feat: document and verify the runnable classroom app` after all relevant checks; report current-instance validation separately from configuration publication and actual classroom deployment.
 
 ## 설계와 계획의 대응
 
 각 설계 요구사항의 구현 위치를 아래 표로 대조한다. 제품 문구·README·이용자 설명은 한국어를 사용한다.
 
-| 설계 절 | 구현 Task |
-| --- | --- |
-| 1·2 목적·범위와 예시 그림으로 시작 | 2, 4, 9, 12 |
-| 3 구조·버전·책임 | 1, 2, 8, 12 |
-| 4 이름 선택·학습·접근성 | 1, 3, 6, 7, 9, 10, 11 |
-| 5 교사 준비·전환·공유 | 4, 5, 9, 11 |
-| 6 데이터·시간·삭제·백업 | 1, 2, 4, 5, 7, 12 |
-| 7 API와 범위 검사 | 3, 4, 5, 6, 7, 8 |
-| 8 접속·개인정보·이미지 | 3, 5, 9, 12 |
-| 9 중복·충돌·단절 복구 | 7, 8, 11, 12 |
-| 10 검증·완료 기준 | 각 Task의 Red/Green, 11, 12 |
-| 11 실행·재현·설정 저장 | 1, 2, 12 |
+| 설계 절                            | 구현 Task                   |
+| ---------------------------------- | --------------------------- |
+| 1·2 목적·범위와 예시 그림으로 시작 | 2, 4, 9, 12                 |
+| 3 구조·버전·책임                   | 1, 2, 8, 12                 |
+| 4 이름 선택·학습·접근성            | 1, 3, 6, 7, 9, 10, 11       |
+| 5 교사 준비·전환·공유              | 4, 5, 9, 11                 |
+| 6 데이터·시간·삭제·백업            | 1, 2, 4, 5, 7, 12           |
+| 7 API와 범위 검사                  | 3, 4, 5, 6, 7, 8            |
+| 8 접속·개인정보·이미지             | 3, 5, 9, 12                 |
+| 9 중복·충돌·단절 복구              | 7, 8, 11, 12                |
+| 10 검증·완료 기준                  | 각 Task의 Red/Green, 11, 12 |
+| 11 실행·재현·설정 저장             | 1, 2, 12                    |
 
 ## 실행 전 검토
 
 이 계획은 실제 제품 코드가 아니다. 검토 후 사용자가 실행 방식을 선택한다. 권장 방식은 이 세션에서 같은 담당자가 Task 1~12를 순서대로 구현하고 마지막에 전체 변경을 별도 검토하는 Native이며, 이유는 인증·저장·실시간·화면이 같은 계약에 의존하므로 맥락을 유지하는 편이 적합하기 때문이다. 대안은 task마다 구현·검토 에이전트를 따로 두고 마지막에도 전체를 검토하는 방식으로 추가 비용이 든다. 실행 방식 선택 없이 agent를 만들거나 구현에 착수하지 않는다.
 
 실행 시에는 승인된 spec과 이 계획을 함께 읽고 작업별 테스트 실패·통과와 commit을 기록한다. 새로운 기능 요구나 실제 배포 요청이 생기면 현재 구현 범위와 분리하여 사용자와 확인한다.
+
+## 현재 검증 상태 (2026-10-15)
+
+Task 1~10 구현 및 검증 완료. Task 11~12의 구현·문서·Chromium 검증은 완료했으며, 체크되지 않은 4단계는 WebKit 실행 파일 다운로드의 환경 접근 차단으로 남겨 두었습니다. 고정 설치·타입 검사·서버 90개·화면 30개·실제 Chromium 11개 검사와 실제 실행·백업·개발 프록시 검증을 완료했습니다. Safari와 현장 리허설·외부 배포·게시 후 복원은 검증했다고 주장하지 않습니다. 별도 전체 코드 검토를 진행합니다.

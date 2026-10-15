@@ -1,6 +1,44 @@
-import React from 'react';import {it,expect,vi} from 'vitest';import {render,screen,fireEvent} from '@testing-library/react';import {TitleScreen} from '../../apps/web/src/student/TitleScreen';
-it('title_has_exact_arcade_copy',()=>{render(<TitleScreen onStart={()=>{}} onTeacher={()=>{}}/>);expect(screen.getByRole('heading',{name:'시계는 째깍! 하루는 찰칵!'})).toBeVisible();expect(screen.getByText('PRESS ANY BUTTON')).toBeVisible();expect(screen.getByText('게임을 시작하려면 아무 버튼이나 누르세요')).toBeVisible();});
-it('tap_or_enter_advances_once',()=>{const start=vi.fn();const {unmount}=render(<TitleScreen onStart={start} onTeacher={()=>{}}/>);fireEvent.click(screen.getByRole('button',{name:'게임 시작'}));expect(start).toHaveBeenCalledTimes(1);unmount();render(<TitleScreen onStart={start} onTeacher={()=>{}}/>);fireEvent.keyDown(window,{key:'Enter'});expect(start).toHaveBeenCalledTimes(2);});
-it('repeat_or_tab_does_not_skip_screen',()=>{const start=vi.fn();render(<TitleScreen onStart={start} onTeacher={()=>{}}/>);for(const key of ['Tab','Shift','Control','Alt','Meta'])fireEvent.keyDown(window,{key});fireEvent.keyDown(window,{key:'a',repeat:true});expect(start).not.toHaveBeenCalled();fireEvent.keyDown(window,{key:'a'});fireEvent.keyDown(window,{key:'Enter'});expect(start).toHaveBeenCalledTimes(1);});
-it('teacher_button_does_not_start_student_flow',()=>{const start=vi.fn(),teacher=vi.fn();render(<TitleScreen onStart={start} onTeacher={teacher}/>);fireEvent.click(screen.getByRole('button',{name:'선생님 입장'}));expect(teacher).toHaveBeenCalledTimes(1);expect(start).not.toHaveBeenCalled();});
-it('title_does_not_request_autoplay',()=>{const audio=vi.spyOn(HTMLMediaElement.prototype,'play');render(<TitleScreen onStart={()=>{}} onTeacher={()=>{}}/>);expect(audio).not.toHaveBeenCalled();audio.mockRestore();});
+import React from 'react';
+import { it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { TitleScreen } from '../../apps/web/src/student/TitleScreen';
+it('title_has_exact_arcade_copy', () => {
+  render(<TitleScreen onStart={() => {}} onTeacher={() => {}} />);
+  expect(screen.getByRole('heading', { name: '시계는 째깍! 하루는 찰칵!' })).toBeVisible();
+  expect(screen.getByText('PRESS ANY BUTTON')).toBeVisible();
+  expect(screen.getByText('게임을 시작하려면 아무 버튼이나 누르세요')).toBeVisible();
+});
+it('tap_or_enter_advances_once', () => {
+  const start = vi.fn();
+  const { unmount } = render(<TitleScreen onStart={start} onTeacher={() => {}} />);
+  fireEvent.click(screen.getByRole('button', { name: '게임 시작' }));
+  expect(start).toHaveBeenCalledTimes(1);
+  unmount();
+  render(<TitleScreen onStart={start} onTeacher={() => {}} />);
+  fireEvent.keyDown(window, { key: 'Enter' });
+  expect(start).toHaveBeenCalledTimes(2);
+});
+it('repeat_or_tab_does_not_skip_screen', () => {
+  const start = vi.fn();
+  render(<TitleScreen onStart={start} onTeacher={() => {}} />);
+  for (const key of ['Tab', 'Shift', 'Control', 'Alt', 'Meta']) fireEvent.keyDown(window, { key });
+  fireEvent.keyDown(window, { key: 'a', repeat: true });
+  expect(start).not.toHaveBeenCalled();
+  fireEvent.keyDown(window, { key: 'a' });
+  fireEvent.keyDown(window, { key: 'Enter' });
+  expect(start).toHaveBeenCalledTimes(1);
+});
+it('teacher_button_does_not_start_student_flow', () => {
+  const start = vi.fn(),
+    teacher = vi.fn();
+  render(<TitleScreen onStart={start} onTeacher={teacher} />);
+  fireEvent.click(screen.getByRole('button', { name: '선생님 입장' }));
+  expect(teacher).toHaveBeenCalledTimes(1);
+  expect(start).not.toHaveBeenCalled();
+});
+it('title_does_not_request_autoplay', () => {
+  const audio = vi.spyOn(HTMLMediaElement.prototype, 'play');
+  render(<TitleScreen onStart={() => {}} onTeacher={() => {}} />);
+  expect(audio).not.toHaveBeenCalled();
+  audio.mockRestore();
+});

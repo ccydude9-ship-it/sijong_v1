@@ -1,4 +1,148 @@
-import React,{useEffect,useRef,useState} from 'react';import {Camera,Users,CheckCircle2} from 'lucide-react';import type {TeacherSnapshot,TeacherLesson,StudentSnapshot} from '../../../../packages/contracts/src/index';import {useSnapshot} from '../realtime/useSnapshot';import {request} from '../api/client';import {StudentShareView} from '../student/StudentShareView';
-export function DashboardView({snapshot,onShare}:{snapshot:TeacherSnapshot;onShare:(id:string)=>void}){return <section className="dashboard"><div className="dashboard-heading"><h2><Users size={22}/>지금 우리 반은</h2><span className="subtle">서로 다른 하루를 함께 만들어요</span></div><div className="summary-grid">{snapshot.students.map(s=><article className={`summary-card ${s.stage==='completed'?'done':''}`} key={s.studentId} data-testid={`student-summary-${s.studentId}`}><div className="summary-top"><h3>{s.displayName} {s.distinction}</h3><span className={s.connected?'online':'offline'}>{s.connected?'접속 중':'연결 대기'}</span></div><p className="summary-stage">{s.stage==='completed'?<><CheckCircle2 size={16}/>완료</>:s.stage==='ordering'?'카드 순서 맞추는 중':'카드 시각 읽는 중'}</p><div className="progress-track" aria-label={`시각 확인 ${s.correctTimeCount}장`}><span style={{width:`${s.correctTimeCount/8*100}%`}}/></div><p className="subtle">시각 확인 {s.correctTimeCount}/8장 · 연습 {s.solvedCount}개</p><button className="secondary" disabled={s.stage!=='completed'} aria-label={`${s.displayName} 일과표 보기`} onClick={()=>onShare(s.studentId)}><Camera size={16}/>일과표 보기</button></article>)}</div></section>;}
-export function Dashboard({lessonId}:{lessonId:string}){const live=useSnapshot({role:'teacher',lessonId,epoch:0}),[shared,setShared]=useState<StudentSnapshot|null>(null),[error,setError]=useState(''),dialog=useRef<HTMLDialogElement>(null);const snapshot=live.snapshot as TeacherSnapshot|null;async function share(id:string){try{const l=await request<TeacherLesson>(`/api/teacher/lessons/${lessonId}`),s=l.students.find(s=>s.id===id);if(!s||s.progress.stage!=='completed'){setError('이 학생은 아직 일과표를 완성하지 않았어요');return;}setShared({lessonId:l.id,phase:l.phase,phaseRevision:l.revision,student:{id:s.id,displayName:s.displayName,distinction:s.distinction},cards:s.cards,progress:s.progress,practice:null,solvedCount:s.solvedCount});}catch(e){setError(e instanceof Error?e.message:'연결을 확인해 주세요');}}
- useEffect(()=>{if(shared&&!dialog.current?.open)dialog.current?.showModal();},[shared]);useEffect(()=>{if(shared&&snapshot&&snapshot.students.find(s=>s.studentId===shared.student.id)?.stage!=='completed')setShared(null);},[snapshot]);return <>{error&&<p role="alert" className="notice error">{error}</p>}{snapshot?<DashboardView snapshot={snapshot} onShare={id=>void share(id)}/>:<p className="notice">아이들의 진행 상황을 연결하고 있어요…</p>}{shared&&<dialog ref={dialog} className="share-dialog" aria-label={`${shared.student.displayName}의 일과표`} onCancel={()=>setShared(null)}><button className="secondary dialog-close" onClick={()=>{dialog.current?.close();setShared(null);}}>닫기</button><h2>{shared.student.displayName}의 하루</h2><StudentShareView snapshot={shared}/></dialog>}</>;}
+import React, { useEffect, useRef, useState } from 'react';
+import { Camera, Users, CheckCircle2 } from 'lucide-react';
+import type {
+  TeacherSnapshot,
+  TeacherLesson,
+  StudentSnapshot,
+} from '../../../../packages/contracts/src/index';
+import { useSnapshot } from '../realtime/useSnapshot';
+import { request } from '../api/client';
+import { StudentShareView } from '../student/StudentShareView';
+export function DashboardView({
+  snapshot,
+  onShare,
+}: {
+  snapshot: TeacherSnapshot;
+  onShare: (id: string) => void;
+}) {
+  return (
+    <section className="dashboard">
+      <div className="dashboard-heading">
+        <h2>
+          <Users size={22} />
+          지금 우리 반은
+        </h2>
+        <span className="subtle">서로 다른 하루를 함께 만들어요</span>
+      </div>
+      <div className="summary-grid">
+        {snapshot.students.map((s) => (
+          <article
+            className={`summary-card ${s.stage === 'completed' ? 'done' : ''}`}
+            key={s.studentId}
+            data-testid={`student-summary-${s.studentId}`}
+          >
+            <div className="summary-top">
+              <h3>
+                {s.displayName} {s.distinction}
+              </h3>
+              <span className={s.connected ? 'online' : 'offline'}>
+                {s.connected ? '접속 중' : '연결 대기'}
+              </span>
+            </div>
+            <p className="summary-stage">
+              {s.stage === 'completed' ? (
+                <>
+                  <CheckCircle2 size={16} />
+                  완료
+                </>
+              ) : s.stage === 'ordering' ? (
+                '카드 순서 맞추는 중'
+              ) : (
+                '카드 시각 읽는 중'
+              )}
+            </p>
+            <div className="progress-track" aria-label={`시각 확인 ${s.correctTimeCount}장`}>
+              <span style={{ width: `${(s.correctTimeCount / 8) * 100}%` }} />
+            </div>
+            <p className="subtle">
+              시각 확인 {s.correctTimeCount}/8장 · 연습 {s.solvedCount}개
+            </p>
+            <button
+              className="secondary"
+              disabled={s.stage !== 'completed'}
+              aria-label={`${s.displayName} 일과표 보기`}
+              onClick={() => onShare(s.studentId)}
+            >
+              <Camera size={16} />
+              일과표 보기
+            </button>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+export function Dashboard({ lessonId }: { lessonId: string }) {
+  const live = useSnapshot({ role: 'teacher', lessonId, epoch: 0 }),
+    [shared, setShared] = useState<StudentSnapshot | null>(null),
+    [error, setError] = useState(''),
+    dialog = useRef<HTMLDialogElement>(null);
+  const snapshot = live.snapshot as TeacherSnapshot | null;
+  async function share(id: string) {
+    try {
+      const l = await request<TeacherLesson>(`/api/teacher/lessons/${lessonId}`),
+        s = l.students.find((s) => s.id === id);
+      if (!s || s.progress.stage !== 'completed') {
+        setError('이 학생은 아직 일과표를 완성하지 않았어요');
+        return;
+      }
+      setShared({
+        lessonId: l.id,
+        phase: l.phase,
+        phaseRevision: l.revision,
+        student: { id: s.id, displayName: s.displayName, distinction: s.distinction },
+        cards: s.cards,
+        progress: s.progress,
+        practice: null,
+        solvedCount: s.solvedCount,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '연결을 확인해 주세요');
+    }
+  }
+  useEffect(() => {
+    if (shared && !dialog.current?.open) dialog.current?.showModal();
+  }, [shared]);
+  useEffect(() => {
+    if (
+      shared &&
+      snapshot &&
+      snapshot.students.find((s) => s.studentId === shared.student.id)?.stage !== 'completed'
+    )
+      setShared(null);
+  }, [snapshot]);
+  return (
+    <>
+      {error && (
+        <p role="alert" className="notice error">
+          {error}
+        </p>
+      )}
+      {snapshot ? (
+        <DashboardView snapshot={snapshot} onShare={(id) => void share(id)} />
+      ) : (
+        <p className="notice">아이들의 진행 상황을 연결하고 있어요…</p>
+      )}
+      {shared && (
+        <dialog
+          ref={dialog}
+          className="share-dialog"
+          aria-label={`${shared.student.displayName}의 일과표`}
+          onCancel={() => setShared(null)}
+        >
+          <button
+            className="secondary dialog-close"
+            onClick={() => {
+              dialog.current?.close();
+              setShared(null);
+            }}
+          >
+            닫기
+          </button>
+          <h2>{shared.student.displayName}의 하루</h2>
+          <StudentShareView snapshot={shared} />
+        </dialog>
+      )}
+    </>
+  );
+}

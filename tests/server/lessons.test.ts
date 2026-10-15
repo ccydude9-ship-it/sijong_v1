@@ -1,16 +1,188 @@
-import {it,expect,afterEach} from 'vitest';import {createServerFixture,loginTeacher,teacherRequest} from '../helpers/server';
-let f:Awaited<ReturnType<typeof createServerFixture>>;afterEach(async()=>f?.cleanup());
-async function setup(){f=await createServerFixture();return loginTeacher(f);}const op=()=>crypto.randomUUID();
-it('only_one_open_lesson',async()=>{const t=await setup();expect((await teacherRequest(f,t,'post','/api/teacher/lessons')).status).toBe(409);});
-it('setup_requires_six_valid_sets',async()=>{const t=await setup(),s=f.store.students.list(f.lessonId)[0];const c=f.store.students.cards(s.id);f.store.students.setCard({...c[1],minuteOfDay:c[0].minuteOfDay});const r=await teacherRequest(f,t,'post',`/api/teacher/lessons/${f.lessonId}/phase`,{operationId:op(),expectedRevision:0,phase:'active'});expect(r.status).toBe(400);expect(f.store.lessons.get(f.lessonId)?.phase).toBe('preparing');});
-it('duplicate_names_require_distinction',async()=>{const t=await setup(),[a,b]=f.store.students.list(f.lessonId);const r=await teacherRequest(f,t,'put',`/api/teacher/lessons/${f.lessonId}/students/${b.slot}`,{displayName:a.displayName,distinction:'',cards:f.store.students.cards(b.id)});expect(r.status).toBe(400);});
-it('rename_keeps_id_card_binding',async()=>{const t=await setup(),a=f.store.students.list(f.lessonId)[0],cards=f.store.students.cards(a.id);const r=await teacherRequest(f,t,'put',`/api/teacher/lessons/${f.lessonId}/students/${a.slot}`,{displayName:'새 이름',distinction:'',cards});expect(r.status).toBe(200);expect(f.store.students.cards(a.id)).toEqual(cards);expect(f.store.students.get(a.id)?.displayName).toBe('새 이름');});
-it('running_cards_are_locked',async()=>{const t=await setup(),s=f.store.students.list(f.lessonId)[0];f.store.lessons.set({...f.store.lessons.get(f.lessonId)!,phase:'active'});expect((await teacherRequest(f,t,'put',`/api/teacher/lessons/${f.lessonId}/students/1`,{displayName:'x',distinction:'',cards:f.store.students.cards(s.id)})).status).toBe(409);});
-it('stale_phase_is_409',async()=>{const t=await setup();expect((await teacherRequest(f,t,'post',`/api/teacher/lessons/${f.lessonId}/phase`,{operationId:op(),expectedRevision:8,phase:'active'})).status).toBe(409);});
-it('duplicate_transition_advances_once',async()=>{const t=await setup(),body={operationId:op(),expectedRevision:0,phase:'active'};for(let i=0;i<2;i++)expect((await teacherRequest(f,t,'post',`/api/teacher/lessons/${f.lessonId}/phase`,body)).status).toBe(200);expect(f.store.lessons.get(f.lessonId)?.revision).toBe(1);});
-it('ending_requires_incomplete_confirmation',async()=>{const t=await setup();f.store.lessons.set({...f.store.lessons.get(f.lessonId)!,phase:'active'});expect((await teacherRequest(f,t,'post',`/api/teacher/lessons/${f.lessonId}/phase`,{operationId:op(),expectedRevision:0,phase:'ended'})).status).toBe(409);});
-it('ended_lesson_is_read_only',async()=>{const t=await setup();f.store.lessons.set({...f.store.lessons.get(f.lessonId)!,phase:'ended'});expect((await teacherRequest(f,t,'post',`/api/teacher/lessons/${f.lessonId}/phase`,{operationId:op(),expectedRevision:0,phase:'active'})).status).toBe(409);});
-it('new_lesson_copies_cards_without_overwriting_history',async()=>{const t=await setup(),old=f.store.students.list(f.lessonId)[0],cards=f.store.students.cards(old.id);f.store.lessons.set({...f.store.lessons.get(f.lessonId)!,phase:'ended'});const r=await teacherRequest(f,t,'post','/api/teacher/lessons');expect(r.status).toBe(201);const student=f.store.students.list(r.body.id)[0];expect(student.id).not.toBe(old.id);expect(f.store.students.cards(student.id).map(c=>c.imageId)).toEqual(cards.map(c=>c.imageId));expect(f.store.students.cards(old.id)).toEqual(cards);});
-it('rotated_code_revokes_old_code_and_sessions',async()=>{const t=await setup(),path=`/api/teacher/lessons/${f.lessonId}/code`,a=await teacherRequest(f,t,'post',path);expect(a.status).toBe(200);expect(a.body.code).toMatch(/^\d{8}$/);const d=await f.client.post('/api/auth/classroom').set('Origin',f.config.publicOrigin).send({code:a.body.code});const b=await teacherRequest(f,t,'post',path);expect(b.body.code).not.toBe(a.body.code);expect((await f.client.get('/api/session').set('Cookie',d.headers['set-cookie'][0])).status).toBe(401);expect((await f.client.post('/api/auth/classroom').set('Origin',f.config.publicOrigin).send({code:a.body.code})).status).toBe(401);});
-it('mode_selection_does_not_change_lesson_phase',async()=>{const t=await setup();const before=f.store.lessons.get(f.lessonId);expect((await teacherRequest(f,t,'get',`/api/teacher/lessons/${f.lessonId}`)).status).toBe(200);expect(f.store.lessons.get(f.lessonId)).toEqual(before);});
-it('failed_transition_rolls_back_receipt',async()=>{const t=await setup();f.store.db.exec("CREATE TRIGGER fail_phase BEFORE UPDATE ON lessons BEGIN SELECT RAISE(ABORT,'injected write failure'); END;");const id=op();expect((await teacherRequest(f,t,'post',`/api/teacher/lessons/${f.lessonId}/phase`,{operationId:id,expectedRevision:0,phase:'active'})).status).toBe(500);expect(f.store.lessons.get(f.lessonId)?.revision).toBe(0);expect(f.store.operations.find(`teacher:${f.lessonId}`,id)).toBeUndefined();});
+import { it, expect, afterEach } from 'vitest';
+import { createServerFixture, loginTeacher, teacherRequest } from '../helpers/server';
+let f: Awaited<ReturnType<typeof createServerFixture>>;
+afterEach(async () => f?.cleanup());
+async function setup() {
+  f = await createServerFixture();
+  return loginTeacher(f);
+}
+const op = () => crypto.randomUUID();
+it('only_one_open_lesson', async () => {
+  const t = await setup();
+  expect((await teacherRequest(f, t, 'post', '/api/teacher/lessons')).status).toBe(409);
+});
+it('setup_requires_six_valid_sets', async () => {
+  const t = await setup(),
+    s = f.store.students.list(f.lessonId)[0];
+  const c = f.store.students.cards(s.id);
+  f.store.students.setCard({ ...c[1], minuteOfDay: c[0].minuteOfDay });
+  const r = await teacherRequest(f, t, 'post', `/api/teacher/lessons/${f.lessonId}/phase`, {
+    operationId: op(),
+    expectedRevision: 0,
+    phase: 'active',
+  });
+  expect(r.status).toBe(400);
+  expect(f.store.lessons.get(f.lessonId)?.phase).toBe('preparing');
+});
+it('duplicate_names_require_distinction', async () => {
+  const t = await setup(),
+    [a, b] = f.store.students.list(f.lessonId);
+  const r = await teacherRequest(
+    f,
+    t,
+    'put',
+    `/api/teacher/lessons/${f.lessonId}/students/${b.slot}`,
+    { displayName: a.displayName, distinction: '', cards: f.store.students.cards(b.id) },
+  );
+  expect(r.status).toBe(400);
+});
+it('rename_keeps_id_card_binding', async () => {
+  const t = await setup(),
+    a = f.store.students.list(f.lessonId)[0],
+    cards = f.store.students.cards(a.id);
+  const r = await teacherRequest(
+    f,
+    t,
+    'put',
+    `/api/teacher/lessons/${f.lessonId}/students/${a.slot}`,
+    { displayName: '새 이름', distinction: '', cards },
+  );
+  expect(r.status).toBe(200);
+  expect(f.store.students.cards(a.id)).toEqual(cards);
+  expect(f.store.students.get(a.id)?.displayName).toBe('새 이름');
+});
+it('running_cards_are_locked', async () => {
+  const t = await setup(),
+    s = f.store.students.list(f.lessonId)[0];
+  f.store.lessons.set({ ...f.store.lessons.get(f.lessonId)!, phase: 'active' });
+  expect(
+    (
+      await teacherRequest(f, t, 'put', `/api/teacher/lessons/${f.lessonId}/students/1`, {
+        displayName: 'x',
+        distinction: '',
+        cards: f.store.students.cards(s.id),
+      })
+    ).status,
+  ).toBe(409);
+});
+it('stale_phase_is_409', async () => {
+  const t = await setup();
+  expect(
+    (
+      await teacherRequest(f, t, 'post', `/api/teacher/lessons/${f.lessonId}/phase`, {
+        operationId: op(),
+        expectedRevision: 8,
+        phase: 'active',
+      })
+    ).status,
+  ).toBe(409);
+});
+it('duplicate_transition_advances_once', async () => {
+  const t = await setup(),
+    body = { operationId: op(), expectedRevision: 0, phase: 'active' };
+  for (let i = 0; i < 2; i++)
+    expect(
+      (await teacherRequest(f, t, 'post', `/api/teacher/lessons/${f.lessonId}/phase`, body)).status,
+    ).toBe(200);
+  expect(f.store.lessons.get(f.lessonId)?.revision).toBe(1);
+});
+it('ending_requires_incomplete_confirmation', async () => {
+  const t = await setup();
+  f.store.lessons.set({ ...f.store.lessons.get(f.lessonId)!, phase: 'active' });
+  expect(
+    (
+      await teacherRequest(f, t, 'post', `/api/teacher/lessons/${f.lessonId}/phase`, {
+        operationId: op(),
+        expectedRevision: 0,
+        phase: 'ended',
+      })
+    ).status,
+  ).toBe(409);
+});
+it('ended_lesson_is_read_only', async () => {
+  const t = await setup();
+  f.store.lessons.set({ ...f.store.lessons.get(f.lessonId)!, phase: 'ended' });
+  expect(
+    (
+      await teacherRequest(f, t, 'post', `/api/teacher/lessons/${f.lessonId}/phase`, {
+        operationId: op(),
+        expectedRevision: 0,
+        phase: 'active',
+      })
+    ).status,
+  ).toBe(409);
+});
+it('new_lesson_copies_cards_without_overwriting_history', async () => {
+  const t = await setup(),
+    old = f.store.students.list(f.lessonId)[0],
+    cards = f.store.students.cards(old.id);
+  f.store.lessons.set({ ...f.store.lessons.get(f.lessonId)!, phase: 'ended' });
+  const r = await teacherRequest(f, t, 'post', '/api/teacher/lessons');
+  expect(r.status).toBe(201);
+  const student = f.store.students.list(r.body.id)[0];
+  expect(student.id).not.toBe(old.id);
+  expect(f.store.students.cards(student.id).map((c) => c.imageId)).toEqual(
+    cards.map((c) => c.imageId),
+  );
+  expect(f.store.students.cards(old.id)).toEqual(cards);
+});
+it('rotated_code_revokes_old_code_and_sessions', async () => {
+  const t = await setup(),
+    path = `/api/teacher/lessons/${f.lessonId}/code`,
+    a = await teacherRequest(f, t, 'post', path);
+  expect(a.status).toBe(200);
+  expect(a.body.code).toMatch(/^\d{8}$/);
+  const d = await f.client
+    .post('/api/auth/classroom')
+    .set('Origin', f.config.publicOrigin)
+    .send({ code: a.body.code });
+  const b = await teacherRequest(f, t, 'post', path);
+  expect(b.body.code).not.toBe(a.body.code);
+  expect(
+    (await f.client.get('/api/session').set('Cookie', d.headers['set-cookie'][0])).status,
+  ).toBe(401);
+  expect(
+    (
+      await f.client
+        .post('/api/auth/classroom')
+        .set('Origin', f.config.publicOrigin)
+        .send({ code: a.body.code })
+    ).status,
+  ).toBe(401);
+});
+it('mode_selection_does_not_change_lesson_phase', async () => {
+  const t = await setup();
+  const before = f.store.lessons.get(f.lessonId);
+  expect((await teacherRequest(f, t, 'get', `/api/teacher/lessons/${f.lessonId}`)).status).toBe(
+    200,
+  );
+  expect(f.store.lessons.get(f.lessonId)).toEqual(before);
+});
+it('failed_transition_rolls_back_receipt', async () => {
+  const t = await setup();
+  f.store.db.exec(
+    "CREATE TRIGGER fail_phase BEFORE UPDATE ON lessons BEGIN SELECT RAISE(ABORT,'injected write failure'); END;",
+  );
+  const id = op();
+  expect(
+    (
+      await teacherRequest(f, t, 'post', `/api/teacher/lessons/${f.lessonId}/phase`, {
+        operationId: id,
+        expectedRevision: 0,
+        phase: 'active',
+      })
+    ).status,
+  ).toBe(500);
+  expect(f.store.lessons.get(f.lessonId)?.revision).toBe(0);
+  expect(f.store.operations.find(`teacher:${f.lessonId}`, id)).toBeUndefined();
+});
+it('new_lesson_requires_previous_devices_to_reconnect', async () => {
+  const t = await setup(),
+    s = f.store.students.list(f.lessonId)[0],
+    issue = f.app.locals.auth.issue('student', f.lessonId, s.id);
+  f.store.lessons.set({ ...f.store.lessons.get(f.lessonId)!, phase: 'ended' });
+  expect((await teacherRequest(f, t, 'post', '/api/teacher/lessons')).status).toBe(201);
+  expect((await f.client.get('/api/session').set('Cookie', `sijong=${issue.token}`)).status).toBe(
+    401,
+  );
+});

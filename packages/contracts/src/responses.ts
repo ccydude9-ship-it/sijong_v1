@@ -1,4 +1,40 @@
-import {z} from 'zod';import {cardSchema,clockSchema} from './requests';
-export const progressResponseSchema=z.object({studentId:z.string(),revision:z.number().int().nonnegative(),stage:z.enum(['reading','ordering','completed']),answers:z.record(z.string(),clockSchema.nullable()),order:z.array(z.string()),completedAt:z.string().nullable(),wrongTimeIds:z.array(z.string()),wrongOrderIds:z.array(z.string())});
-export const snapshotSchema=z.object({lessonId:z.string(),phase:z.enum(['preparing','active','ended']),phaseRevision:z.number().int().nonnegative(),student:z.object({id:z.string(),displayName:z.string(),distinction:z.string()}),cards:z.array(cardSchema),progress:progressResponseSchema,practice:z.object({id:z.string(),clock:clockSchema}).nullable(),solvedCount:z.number().int().nonnegative()});
-export const teacherSnapshotSchema=z.object({lessonId:z.string(),phase:z.enum(['preparing','active','ended']),phaseRevision:z.number().int().nonnegative(),students:z.array(z.object({studentId:z.string(),displayName:z.string(),distinction:z.string(),progressRevision:z.number().int().nonnegative(),stage:z.enum(['reading','ordering','completed']),correctTimeCount:z.number().int().min(0).max(8),solvedCount:z.number().int().nonnegative(),connected:z.boolean(),completedAt:z.string().nullable()}))});
+import { z } from 'zod';
+import { cardSchema, clockSchema } from './requests';
+export const progressResponseSchema = z.object({
+  studentId: z.string(),
+  revision: z.number().int().nonnegative(),
+  stage: z.enum(['reading', 'ordering', 'completed']),
+  answers: z.record(z.string(), clockSchema.nullable()),
+  order: z.array(z.string()),
+  completedAt: z.string().nullable(),
+  wrongTimeIds: z.array(z.string()),
+  wrongOrderIds: z.array(z.string()),
+});
+export const snapshotSchema = z.object({
+  lessonId: z.string(),
+  phase: z.enum(['preparing', 'active', 'ended']),
+  phaseRevision: z.number().int().nonnegative(),
+  student: z.object({ id: z.string(), displayName: z.string(), distinction: z.string() }),
+  cards: z.array(cardSchema),
+  progress: progressResponseSchema,
+  practice: z.object({ id: z.string(), clock: clockSchema }).nullable(),
+  solvedCount: z.number().int().nonnegative(),
+});
+export const teacherSnapshotSchema = z.object({
+  lessonId: z.string(),
+  phase: z.enum(['preparing', 'active', 'ended']),
+  phaseRevision: z.number().int().nonnegative(),
+  students: z.array(
+    z.object({
+      studentId: z.string(),
+      displayName: z.string(),
+      distinction: z.string(),
+      progressRevision: z.number().int().nonnegative(),
+      stage: z.enum(['reading', 'ordering', 'completed']),
+      correctTimeCount: z.number().int().min(0).max(8),
+      solvedCount: z.number().int().nonnegative(),
+      connected: z.boolean(),
+      completedAt: z.string().nullable(),
+    }),
+  ),
+});

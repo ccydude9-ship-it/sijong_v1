@@ -1,12 +1,99 @@
-import React,{createContext,useContext,useEffect,useRef,useState} from 'react';import type {Session} from '../../../../packages/contracts/src/index';import {request,json,setCsrf,ApiError} from '../api/client';
-export type ClientSession=Session&{csrfToken:string};
-const Context=createContext<null|{session:ClientSession|null;loading:boolean;epoch:number;refresh:()=>Promise<void>;loginTeacher:(password:string)=>Promise<void>;connect:(code:string)=>Promise<void>;selectStudent:(id:string)=>Promise<void>;resetStudent:()=>Promise<void>;logout:()=>Promise<void>}>(null);
-export function SessionProvider({children}:{children:React.ReactNode}){const [session,setSession]=useState<ClientSession|null>(null),[loading,setLoading]=useState(true),[epoch,setEpoch]=useState(0),current=useRef<ClientSession|null>(null),version=useRef(0);function accept(s:ClientSession|null){current.current=s;setCsrf(s?.csrfToken||'');setSession(s);}function change(){version.current++;setEpoch(version.current);return version.current;}async function refresh(){const v=version.current;try{const s=await request<ClientSession>('/api/session');if(v===version.current)accept(s);}catch(e){if(e instanceof ApiError&&e.status===401&&v===version.current)accept(null);else throw e;}}
- useEffect(()=>{void refresh().catch(()=>{}).finally(()=>setLoading(false));return()=>{version.current++;};},[]);
- async function login(path:string,body:object){const v=change(),s=await request<ClientSession>(path,json('POST',body));if(v!==version.current)throw new DOMException('이전 접속','AbortError');accept(s);}
- async function resetStudent(){const v=change(),s=await request<ClientSession>('/api/auth/student/reset',json('POST',{}));if(v===version.current)accept(s);}
- async function selectStudent(id:string){const v=change();if(current.current?.role==='student'){const c=await request<ClientSession>('/api/auth/student/reset',json('POST',{}));if(v!==version.current)throw new DOMException('이전 접속','AbortError');accept(c);}const s=await request<ClientSession>('/api/auth/student',json('POST',{studentId:id}));if(v!==version.current)throw new DOMException('이전 접속','AbortError');accept(s);}
- async function logout(){change();await request('/api/auth/logout',json('POST',{}));accept(null);}
- return <Context.Provider value={{session,loading,epoch,refresh,loginTeacher:p=>login('/api/auth/teacher',{password:p}),connect:code=>login('/api/auth/classroom',{code}),selectStudent,resetStudent,logout}}>{children}</Context.Provider>;
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import type { Session } from '../../../../packages/contracts/src/index';
+import { request, json, setCsrf, ApiError } from '../api/client';
+export type ClientSession = Session & { csrfToken: string };
+const Context = createContext<null | {
+  session: ClientSession | null;
+  loading: boolean;
+  epoch: number;
+  refresh: () => Promise<void>;
+  loginTeacher: (password: string) => Promise<void>;
+  connect: (code: string) => Promise<void>;
+  selectStudent: (id: string) => Promise<void>;
+  resetStudent: () => Promise<void>;
+  logout: () => Promise<void>;
+}>(null);
+export function SessionProvider({ children }: { children: React.ReactNode }) {
+  const [session, setSession] = useState<ClientSession | null>(null),
+    [loading, setLoading] = useState(true),
+    [epoch, setEpoch] = useState(0),
+    current = useRef<ClientSession | null>(null),
+    version = useRef(0);
+  function accept(s: ClientSession | null) {
+    current.current = s;
+    setCsrf(s?.csrfToken || '');
+    setSession(s);
+  }
+  function change() {
+    version.current++;
+    setEpoch(version.current);
+    return version.current;
+  }
+  async function refresh() {
+    const v = version.current;
+    try {
+      const s = await request<ClientSession>('/api/session');
+      if (v === version.current) accept(s);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401 && v === version.current) accept(null);
+      else throw e;
+    }
+  }
+  useEffect(() => {
+    void refresh()
+      .catch(() => {})
+      .finally(() => setLoading(false));
+    return () => {
+      version.current++;
+    };
+  }, []);
+  async function login(path: string, body: object) {
+    const v = change(),
+      s = await request<ClientSession>(path, json('POST', body));
+    if (v !== version.current) throw new DOMException('이전 접속', 'AbortError');
+    accept(s);
+  }
+  async function resetStudent() {
+    const v = change(),
+      s = await request<ClientSession>('/api/auth/student/reset', json('POST', {}));
+    if (v === version.current) accept(s);
+  }
+  async function selectStudent(id: string) {
+    const v = change();
+    if (current.current?.role === 'student') {
+      const c = await request<ClientSession>('/api/auth/student/reset', json('POST', {}));
+      if (v !== version.current) throw new DOMException('이전 접속', 'AbortError');
+      accept(c);
+    }
+    const s = await request<ClientSession>('/api/auth/student', json('POST', { studentId: id }));
+    if (v !== version.current) throw new DOMException('이전 접속', 'AbortError');
+    accept(s);
+  }
+  async function logout() {
+    change();
+    await request('/api/auth/logout', json('POST', {}));
+    accept(null);
+  }
+  return (
+    <Context.Provider
+      value={{
+        session,
+        loading,
+        epoch,
+        refresh,
+        loginTeacher: (p) => login('/api/auth/teacher', { password: p }),
+        connect: (code) => login('/api/auth/classroom', { code }),
+        selectStudent,
+        resetStudent,
+        logout,
+      }}
+    >
+      {children}
+    </Context.Provider>
+  );
 }
-export function useSession(){const c=useContext(Context);if(!c)throw Error('SessionProvider is required');return c;}
+export function useSession() {
+  const c = useContext(Context);
+  if (!c) throw Error('SessionProvider is required');
+  return c;
+}
