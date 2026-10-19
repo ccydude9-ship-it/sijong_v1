@@ -1724,6 +1724,63 @@
           width: 210px;
         }
       }
+
+      .time-blank {
+        display: inline-block;
+        width: 1.05em;
+        height: 1.05em;
+        border: 2px solid #bbb5cf;
+        border-radius: 5px;
+        background: #fff;
+        vertical-align: -0.12em;
+        margin-right: 0.1em;
+      }
+      .home-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .sound-toggle {
+        position: relative;
+        width: 50px;
+        min-width: 50px;
+        padding: 8px;
+        font-size: 26px;
+      }
+      .sound-toggle[aria-pressed='false'] {
+        color: #848094;
+      }
+      .sound-toggle[aria-pressed='false']:after {
+        content: '';
+        position: absolute;
+        width: 25px;
+        height: 2px;
+        background: currentColor;
+        top: 50%;
+        left: 12px;
+        transform: rotate(-45deg);
+      }
+      .sound-toggle[aria-pressed='true'] {
+        color: var(--purple);
+        background: #eee9fb;
+      }
+      .practice-page .reward-card small {
+        left: -75px;
+        right: -75px;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .practice-page .reward-panel .stat {
+        display: block;
+        margin: 22px 0 0;
+        text-align: center;
+      }
+      @media (max-width: 699px) {
+        .practice-page .reward-card small {
+          left: -25px;
+          right: -25px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -1964,7 +2021,16 @@
           return (
             '<div class="top"><span class="chip">' +
             esc(label(student())) +
-            '</span><div>' +
+            '</span><div class="home-controls">' +
+            (home
+              ? '<button class="secondary sound-toggle" data-action="sound" aria-label="' +
+                (sound ? '소리 끄기' : '소리 켜기') +
+                '" title="' +
+                (sound ? '소리 켜짐' : '소리 꺼짐') +
+                '" aria-pressed="' +
+                sound +
+                '"><span aria-hidden="true">♪</span></button>'
+              : '') +
             (home
               ? '<button class="secondary" data-action="home">홈으로 돌아가기</button>'
               : '<button class="ghost" data-action="names">이름 다시 고르기</button>') +
@@ -2128,15 +2194,16 @@
             '분'
           );
         }
+        const blankTime = '<span class="time-blank" role="img" aria-label="미선택"></span>';
         function timeInput(answer, scope, id, wrong = false, disabled = false) {
           const attr = ' data-scope="' + scope + '" data-id="' + esc(id) + '"';
           return (
             '<div class="time-input ' +
             (wrong ? 'input-error' : '') +
             '"><div class="time-readout"><span>' +
-            (answer?.hour ?? '??') +
+            (answer?.hour ?? blankTime) +
             '</span> 시 <span>' +
-            (answer?.minute != null ? String(answer.minute).padStart(2, '0') : '??') +
+            (answer?.minute != null ? String(answer.minute).padStart(2, '0') : blankTime) +
             '</span> 분</div><div class="hours" role="group" aria-label="시 선택">' +
             Array.from(
               { length: 12 },
@@ -2283,7 +2350,7 @@
           );
         }
         function newQuestion() {
-          const cards = student().cards,
+          const cards = student().cards.filter((c) => c.id !== student().progress.practice?.cardId),
             card = cards[Math.floor(Math.random() * cards.length)];
           return {
             hour: Math.floor(card.minute / 60) % 12 || 12,
@@ -2329,12 +2396,14 @@
               '">짧은 바늘 사이 보기</button></div><p class="hint-explanation" aria-live="polite">' +
               hintText(q) +
               '</p></div><div class="panel reward-panel">' +
-              (match && !q.dismissed
-                ? '<button class="reward-card" data-action="dismiss-card" aria-label="' +
+              (match
+                ? '<button class="reward-card" data-action="next" aria-label="' +
                   esc(match.title) +
-                  ' 일과 카드 닫기">' +
+                  ' 일과 카드 눌러 다음 문제" ' +
+                  (data.phase === 'ended' ? 'disabled' : '') +
+                  '>' +
                   frontCard(s, match) +
-                  '<small>카드를 한 번 더 누르면 닫혀요</small></button>'
+                  '<small>카드를 한 번 더 누르면 다음 문제로 넘어가요</small></button>'
                 : '<span class="eyebrow">시각을 골라요</span>' +
                   timeInput(
                     q.answer,
@@ -2344,19 +2413,13 @@
                     q.correct || data.phase === 'ended',
                   )) +
               (q.correct
-                ? '<div class="actions"><button class="primary" data-action="next" ' +
-                  (data.phase === 'ended' ? 'disabled' : '') +
-                  '>다음 시계 만나기</button></div>'
+                ? ''
                 : '<div class="actions"><button class="primary" data-action="practice-check" ' +
                   (!validTime(q.answer) || data.phase === 'ended' ? 'disabled' : '') +
                   '>정답 확인하기</button></div>') +
               '<p class="stat">지금까지 <strong>' +
               p.solved +
-              '</strong>개의 시계를 읽었어요.</p><button class="ghost" data-action="sound" aria-pressed="' +
-              sound +
-              '">' +
-              (sound ? '♪ 소리 켜짐' : '♩ 소리 꺼짐') +
-              '</button></div></div>',
+              '</strong>개의 시계를 읽었어요.</p></div></div>',
           );
         }
         function renderReading() {
@@ -2400,13 +2463,13 @@
                     esc(c.title) +
                     ' 시각 고르기">' +
                     (p.answers[c.id]
-                      ? (p.answers[c.id].hour ?? '??') +
+                      ? (p.answers[c.id].hour ?? blankTime) +
                         '시 ' +
                         (p.answers[c.id].minute == null
-                          ? '??'
+                          ? blankTime
                           : String(p.answers[c.id].minute).padStart(2, '0')) +
                         '분'
-                      : '?시 ??분') +
+                      : blankTime + '시 ' + blankTime + '분') +
                     '<small>' +
                     (p.wrong.includes(c.id) ? '다시 읽어 보세요' : '눌러서 시각 고르기') +
                     '</small></button>' +
@@ -3025,12 +3088,6 @@
             render();
             return;
           }
-          if (action === 'dismiss-card') {
-            p.practice.dismissed = true;
-            saveProgress();
-            render();
-            return;
-          }
           if (action === 'teacher-save') {
             if (!uploading) saveTeacher();
             return;
@@ -3151,6 +3208,7 @@
             return;
           }
           if (action === 'next') {
+            if (!p.practice?.correct) return;
             p.practice = newQuestion();
             saveProgress();
             navigate('practice');

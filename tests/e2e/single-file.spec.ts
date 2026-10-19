@@ -58,8 +58,9 @@ test('personal reading drafts survive home reload and another student selection'
     page
       .locator('[data-reading-card]')
       .first()
-      .getByRole('button', { name: /시각 고르기/ }),
-  ).toContainText('?');
+      .getByRole('button', { name: /시각 고르기/ })
+      .locator('.time-blank'),
+  ).toHaveCount(2);
   await page.reload();
   await page.getByRole('button', { name: '게임 시작' }).click();
   await page.getByRole('button', { name: '별이', exact: true }).click();
@@ -122,7 +123,7 @@ test('practice gives retry hints and grades without a network service', async ({
     .getByRole('button', { name: `${String(question.minute).padStart(2, '0')}분`, exact: true })
     .click();
   await page.getByRole('button', { name: '정답 확인하기' }).click();
-  await expect(page.getByRole('button', { name: '다음 시계 만나기' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /일과 카드 눌러 다음 문제/ })).toBeVisible();
   await expect(page.locator('.stat')).toContainText('1개의 시계');
 });
 
@@ -257,7 +258,7 @@ test('student photo is editable persistent and displayed as a round name avatar'
   );
 });
 
-test('correct practice reveals a large own card to the right and tapping dismisses it', async ({
+test('correct practice reveals a large own card to the right and tapping starts a fresh question', async ({
   page,
 }) => {
   await page.getByRole('button', { name: '게임 시작' }).click();
@@ -272,7 +273,7 @@ test('correct practice reveals a large own card to the right and tapping dismiss
     .getByRole('button', { name: String(q.minute).padStart(2, '0') + '분', exact: true })
     .click();
   await page.getByRole('button', { name: '정답 확인하기' }).click();
-  const reward = page.getByRole('button', { name: /일과 카드 닫기/ });
+  const reward = page.getByRole('button', { name: /일과 카드 눌러 다음 문제/ });
   await expect(reward).toBeVisible();
   const cardBox = await reward.boundingBox(),
     clockBox = await page.locator('.clock-panel').boundingBox();
@@ -291,7 +292,21 @@ test('correct practice reveals a large own card to the right and tapping dismiss
   await expect(page.getByText('잘 읽었어요! ✦')).toHaveCount(0);
   await reward.click();
   await expect(reward).toHaveCount(0);
-  await expect(page.getByRole('button', { name: '다음 시계 만나기' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '다음 시계 만나기' })).toHaveCount(0);
+  await expect(page.locator('.time-readout .time-blank')).toHaveCount(2);
+  await expect(page.getByRole('button', { name: '정답 확인하기' })).toBeDisabled();
+  await expect(page.locator('.stat')).toContainText('1개의 시계');
+  const next = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('sijong.single.v1')!).students[0].progress.practice,
+  );
+  expect(next.cardId).not.toBe(q.cardId);
+  expect(next.answer).toBeNull();
+  const sound = page.locator('.top').getByRole('button', { name: '소리 켜기', exact: true });
+  await expect(sound).toHaveAttribute('aria-pressed', 'false');
+  await sound.click();
+  await expect(
+    page.locator('.top').getByRole('button', { name: '소리 끄기', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('tablet shows all eight portrait cards in two rows of four', async ({ page }) => {
