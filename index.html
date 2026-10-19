@@ -1740,30 +1740,6 @@
         align-items: center;
         gap: 10px;
       }
-      .sound-toggle {
-        position: relative;
-        width: 50px;
-        min-width: 50px;
-        padding: 8px;
-        font-size: 26px;
-      }
-      .sound-toggle[aria-pressed='false'] {
-        color: #848094;
-      }
-      .sound-toggle[aria-pressed='false']:after {
-        content: '';
-        position: absolute;
-        width: 25px;
-        height: 2px;
-        background: currentColor;
-        top: 50%;
-        left: 12px;
-        transform: rotate(-45deg);
-      }
-      .sound-toggle[aria-pressed='true'] {
-        color: var(--purple);
-        background: #eee9fb;
-      }
       .practice-page .reward-card small {
         left: -75px;
         right: -75px;
@@ -1780,6 +1756,12 @@
           left: -25px;
           right: -25px;
         }
+      }
+      .settings-icon {
+        font-size: 28px;
+        min-width: 48px;
+        min-height: 48px;
+        padding: 6px;
       }
     </style>
   </head>
@@ -1984,9 +1966,7 @@
           teacherId = data.students[0].id,
           teacherDraft = null,
           teacherDirty = false,
-          uploading = false,
-          sound = false,
-          audio = null;
+          uploading = false;
         const student = () => data.students.find((s) => s.id === studentId);
         const label = (s) => s.name + (s.distinction ? ' ' + s.distinction : '');
         function persist() {
@@ -2022,15 +2002,6 @@
             '<div class="top"><span class="chip">' +
             esc(label(student())) +
             '</span><div class="home-controls">' +
-            (home
-              ? '<button class="secondary sound-toggle" data-action="sound" aria-label="' +
-                (sound ? '소리 끄기' : '소리 켜기') +
-                '" title="' +
-                (sound ? '소리 켜짐' : '소리 꺼짐') +
-                '" aria-pressed="' +
-                sound +
-                '"><span aria-hidden="true">♪</span></button>'
-              : '') +
             (home
               ? '<button class="secondary" data-action="home">홈으로 돌아가기</button>'
               : '<button class="ghost" data-action="names">이름 다시 고르기</button>') +
@@ -2583,16 +2554,15 @@
           );
           return page(
             '<div class="top"><span class="brand">선생님 공유모드</span><div class="gallery-controls">' +
-              (student()
-                ? '<button class="secondary" data-action="home">홈으로 돌아가기</button>'
-                : '') +
-              '<label class="secondary result-import">완료 기록 불러오기<input type="file" id="result-import" aria-label="완료 기록 불러오기" multiple accept=".json,application/json" hidden></label><button class="secondary" data-action="teacher-back">선생님 준비</button><button class="ghost" data-action="title">시작 화면으로</button></div></div>' +
+              '<button class="secondary" data-action="' +
+              (student() ? 'home' : 'names') +
+              '">홈으로 돌아가기</button><button class="ghost settings-icon" data-action="teacher-back" aria-label="선생님 설정" title="선생님 설정"><span aria-hidden="true">⚙</span></button></div></div>' +
               heading(
                 'TEACHER SHARING',
                 '우리 반의 하루를 함께 봐요',
                 '완성한 학생의 이름을 누르면 그 학생이 배치한 일과표가 나와요.',
               ) +
-              '<p class="teacher-warning">이 기기에서 완성한 기록은 바로 보여요. 다른 태블릿의 기록은 학생의 완료 화면에서 내보내고, 여기에서 여러 파일을 함께 불러와 주세요.</p>' +
+              '<p class="teacher-warning">이 기기에서 완성한 기록은 바로 보여요. 다른 태블릿의 기록은 학생의 완료 화면에서 내보내고, 오른쪽 위 설정에서 여러 파일을 함께 불러와 주세요.</p>' +
               notice() +
               '<div class="teacher-gallery" aria-label="공유할 학생">' +
               data.students
@@ -2647,7 +2617,7 @@
         function renderTeacher() {
           const t = teacherDraft;
           return page(
-            '<div class="top"><span class="brand">◷ 선생님 준비</span><button class="secondary" data-action="teacher-exit">시작 화면으로</button></div><div class="teacher-toolbar"><div><span class="eyebrow">TEACHER\'S ROOM</span><h1>우리 반의 하루</h1></div><div class="actions" style="margin:0"><button class="primary" data-action="teacher-gallery">공유모드 열기</button><button class="secondary" data-action="phase">' +
+            '<div class="top"><span class="brand">◷ 선생님 준비</span><button class="secondary" data-action="teacher-exit">시작 화면으로</button></div><div class="teacher-toolbar"><div><span class="eyebrow">TEACHER\'S ROOM</span><h1>우리 반의 하루</h1></div><div class="actions" style="margin:0"><button class="primary" data-action="teacher-gallery">공유모드 열기</button><label class="secondary result-import">완료 기록 불러오기<input type="file" id="result-import" aria-label="완료 기록 불러오기" multiple accept=".json,application/json" hidden></label><button class="secondary" data-action="phase">' +
               (data.phase === 'active' ? '수업 마치기' : '수업 다시 시작') +
               '</button><button class="secondary" data-action="export">자료 내보내기</button><label class="secondary" style="cursor:pointer;display:inline-flex;align-items:center">자료 불러오기<input type="file" id="import-file" accept=".json,application/json" aria-label="자료 불러오기" style="display:none"></label></div></div><p class="teacher-warning">이 파일 하나로 바로 수업할 수 있어요. 이름과 그림, 진행 내용은 현재 브라우저에 저장됩니다. 다른 기기에서 쓰려면 자료를 내보낸 뒤 그 기기에서 불러와 주세요. 여러 기기의 진행 상황은 자동으로 합쳐지지 않아요.</p>' +
               notice() +
@@ -2866,25 +2836,6 @@
             window.confirm('아직 저장하지 않은 변경이 있어요. 변경을 취소하고 이동할까요?')
           );
         }
-        function play() {
-          if (!sound || !audio) return;
-          audio
-            .resume()
-            .then(() => {
-              [523, 659, 784].forEach((f, i) => {
-                const osc = audio.createOscillator(),
-                  g = audio.createGain(),
-                  now = audio.currentTime + i * 0.12;
-                osc.frequency.value = f;
-                g.gain.setValueAtTime(0.06, now);
-                g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-                osc.connect(g).connect(audio.destination);
-                osc.start(now);
-                osc.stop(now + 0.2);
-              });
-            })
-            .catch(() => {});
-        }
         function markTeacherDirty() {
           teacherDirty = true;
           const out = document.getElementById('teacher-dirty');
@@ -2983,6 +2934,7 @@
             data = next;
             persist();
             shareStudentId = records[0].id;
+            if (screen === 'teacher') setTeacher(teacherId);
             feedback(records.length + '명의 완료 기록을 불러왔어요.', 'success');
           } catch (err) {
             feedback(err.message || '완료 기록을 읽지 못했어요.');
@@ -3143,19 +3095,6 @@
             window.print();
             return;
           }
-          if (action === 'sound') {
-            sound = !sound;
-            if (sound) {
-              try {
-                audio ??= new (window.AudioContext || window.webkitAudioContext)();
-                audio.resume().catch(() => {});
-              } catch {
-                sound = false;
-              }
-            }
-            keepScroll(() => {});
-            return;
-          }
           if (action === 'flip') {
             keepScroll(() => {
               p.flipped[id] = !p.flipped[id];
@@ -3200,7 +3139,6 @@
               q.correct = true;
               p.solved++;
               saveProgress();
-              play();
               message = '';
               messageKind = '';
               render();
@@ -3282,7 +3220,6 @@
             } else {
               p.stage = 'completed';
               saveProgress();
-              play();
               navigate('practical');
             }
           }
@@ -3300,6 +3237,7 @@
         root.addEventListener('change', async (e) => {
           const input = e.target;
           if (input.id === 'result-import') {
+            if (!confirmTeacherLeave()) return;
             await importResults([...input.files]);
             return;
           }

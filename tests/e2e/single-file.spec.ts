@@ -301,12 +301,7 @@ test('correct practice reveals a large own card to the right and tapping starts 
   );
   expect(next.cardId).not.toBe(q.cardId);
   expect(next.answer).toBeNull();
-  const sound = page.locator('.top').getByRole('button', { name: '소리 켜기', exact: true });
-  await expect(sound).toHaveAttribute('aria-pressed', 'false');
-  await sound.click();
-  await expect(
-    page.locator('.top').getByRole('button', { name: '소리 끄기', exact: true }),
-  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-action="sound"]')).toHaveCount(0);
 });
 
 test('tablet shows all eight portrait cards in two rows of four', async ({ page }) => {
@@ -409,9 +404,13 @@ test('teacher imports multiple tablet results without overwriting another studen
   await page.getByRole('button', { name: '게임 시작' }).click();
   await page.getByRole('button', { name: '별이', exact: true }).click();
   await page.getByRole('button', { name: /공유모드/ }).click();
+  await expect(page.locator('.top button')).toHaveCount(2);
+  await page.getByRole('button', { name: '선생님 설정', exact: true }).click();
   await expect(page.getByLabel('완료 기록 불러오기')).toBeAttached();
   page.on('dialog', (dialog) => dialog.accept());
   await page.getByLabel('완료 기록 불러오기').setInputFiles(records);
+  await expect(page.getByText('2명의 완료 기록을 불러왔어요.')).toBeVisible();
+  await page.getByRole('button', { name: '공유모드 열기', exact: true }).click();
   await expect(page.getByRole('button', { name: '별이 일과표 보기', exact: true })).toBeEnabled();
   await expect(page.getByRole('button', { name: '하늘 일과표 보기', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '별이 일과표 보기', exact: true }).click();
