@@ -1669,6 +1669,61 @@
           flex-wrap: wrap;
         }
       }
+
+      .mode-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        max-width: 1100px;
+      }
+      .practice-layout .clock-panel,
+      .practice-layout .reward-panel {
+        padding: 24px;
+        align-content: start;
+      }
+      .practice-layout .clock-panel {
+        grid-template-rows: 330px auto auto;
+      }
+      .practice-page .reward-card {
+        display: block;
+        height: 330px;
+        min-height: 0;
+        width: 231px;
+        max-width: 100%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        margin: 0 auto 30px;
+        position: relative;
+      }
+      .practice-page .reward-card .paper-card {
+        height: 100%;
+        width: 100%;
+      }
+      .practice-page .reward-card small {
+        position: absolute;
+        top: 100%;
+        left: -30px;
+        right: -30px;
+        margin-top: 8px;
+      }
+      .dialog-flip {
+        display: block;
+        padding: 0;
+        background: transparent;
+        margin: auto;
+        border-radius: 20px;
+      }
+      @media (max-width: 699px) {
+        .mode-grid {
+          grid-template-columns: 1fr;
+        }
+        .practice-layout .clock-panel {
+          grid-template-rows: 300px auto auto;
+        }
+        .practice-page .reward-card {
+          height: 300px;
+          width: 210px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -1750,6 +1805,13 @@
             (t.minute === 0 || t.minute === 30)
           );
         }
+        function validDraft(t) {
+          return (
+            !!t &&
+            (t.hour === null || (Number.isInteger(t.hour) && t.hour >= 1 && t.hour <= 12)) &&
+            (t.minute === null || t.minute === 0 || t.minute === 30)
+          );
+        }
         function valid(data) {
           const safeId = (id) => typeof id === 'string' && /^[a-zA-Z0-9_-]{1,80}$/.test(id);
           return (
@@ -1811,7 +1873,7 @@
                 !p.answers ||
                 typeof p.answers !== 'object' ||
                 Array.isArray(p.answers) ||
-                !Object.entries(p.answers).every(([id, t]) => hasCard(id) && validTime(t))
+                !Object.entries(p.answers).every(([id, t]) => hasCard(id) && validDraft(t))
               )
                 return false;
               if (
@@ -1832,7 +1894,7 @@
                   validTime(q) &&
                   (q.cardId === undefined || hasCard(q.cardId)) &&
                   (q.dismissed === undefined || typeof q.dismissed === 'boolean') &&
-                  (q.answer === null || validTime(q.answer)) &&
+                  (q.answer === null || validDraft(q.answer)) &&
                   typeof q.correct === 'boolean' &&
                   ['none', 'minute', 'hour', 'zoom'].includes(q.hint))
               );
@@ -1857,6 +1919,7 @@
         let selectedOrderId = '',
           shareStudentId = '',
           editingCardId = '',
+          dialogFlipped = false,
           screen = 'title',
           studentId = '',
           message = '',
@@ -2071,9 +2134,9 @@
             '<div class="time-input ' +
             (wrong ? 'input-error' : '') +
             '"><div class="time-readout"><span>' +
-            (answer ? answer.hour : '?') +
+            (answer?.hour ?? '??') +
             '</span> 시 <span>' +
-            (answer ? String(answer.minute).padStart(2, '0') : '??') +
+            (answer?.minute != null ? String(answer.minute).padStart(2, '0') : '??') +
             '</span> 분</div><div class="hours" role="group" aria-label="시 선택">' +
             Array.from(
               { length: 12 },
@@ -2105,19 +2168,24 @@
                   '분" aria-pressed="' +
                   (answer?.minute === m) +
                   '" ' +
-                  (!answer || disabled ? 'disabled' : '') +
+                  (disabled ? 'disabled' : '') +
                   '>' +
                   String(m).padStart(2, '0') +
                   '분</button>',
               )
               .join('') +
             '</div>' +
+            (!disabled && !validTime(answer)
+              ? '<p class="input-caption" aria-live="polite">' +
+                (answer?.hour == null ? '시를 골라 주세요' : '분도 골라 주세요') +
+                '</p>'
+              : '') +
             (wrong ? '<p class="input-caption">이 시각을 다시 읽어 볼까요?</p>' : '') +
             '</div>'
           );
         }
         function renderTitle() {
-          return '<main class="title-page"><div class="arcade-label">TICK TOCK · MY LITTLE DAY</div><button class="title-start" data-action="start" aria-label="게임 시작"><div class="mascot-clock" aria-hidden="true"></div><h1><span>시계는 째깍!</span> <span>하루는 찰칵!</span></h1><div class="press">PRESS ANY BUTTON</div><div class="title-caption">게임을 시작하려면 아무 버튼이나 누르세요</div></button><div class="title-footer"><span class="subtle" style="color:#b3afd0">나만의 하루를 만드는 시간 여행</span><button class="ghost" data-action="teacher">선생님 준비</button><button class="ghost" data-action="teacher-gallery">선생님 공유모드</button></div></main>';
+          return '<main class="title-page"><div class="arcade-label">TICK TOCK · MY LITTLE DAY</div><button class="title-start" data-action="start" aria-label="게임 시작"><div class="mascot-clock" aria-hidden="true"></div><h1><span>시계는 째깍!</span> <span>하루는 찰칵!</span></h1><div class="press">PRESS ANY BUTTON</div><div class="title-caption">게임을 시작하려면 아무 버튼이나 누르세요</div></button><div class="title-footer"><span class="subtle" style="color:#b3afd0">나만의 하루를 만드는 시간 여행</span><button class="ghost" data-action="teacher">선생님 준비</button></div></main>';
         }
         function avatar(s, i) {
           return (
@@ -2171,6 +2239,14 @@
               '내 하루를 순서대로 착착',
               '▧',
               '나만의 카드 8장',
+            ],
+            [
+              'teacher-share',
+              '공유모드',
+              '찰칵! 함께 봐',
+              '우리 반 친구들의 하루',
+              '✦',
+              '선생님과 함께 보기',
             ],
           ];
           return page(
@@ -2268,12 +2344,11 @@
                     q.correct || data.phase === 'ended',
                   )) +
               (q.correct
-                ? '<div class="correct">잘 읽었어요! ✦</div>' +
-                  '<div class="actions"><button class="primary" data-action="next" ' +
+                ? '<div class="actions"><button class="primary" data-action="next" ' +
                   (data.phase === 'ended' ? 'disabled' : '') +
                   '>다음 시계 만나기</button></div>'
                 : '<div class="actions"><button class="primary" data-action="practice-check" ' +
-                  (!q.answer || data.phase === 'ended' ? 'disabled' : '') +
+                  (!validTime(q.answer) || data.phase === 'ended' ? 'disabled' : '') +
                   '>정답 확인하기</button></div>') +
               '<p class="stat">지금까지 <strong>' +
               p.solved +
@@ -2325,9 +2400,11 @@
                     esc(c.title) +
                     ' 시각 고르기">' +
                     (p.answers[c.id]
-                      ? p.answers[c.id].hour +
+                      ? (p.answers[c.id].hour ?? '??') +
                         '시 ' +
-                        String(p.answers[c.id].minute).padStart(2, '0') +
+                        (p.answers[c.id].minute == null
+                          ? '??'
+                          : String(p.answers[c.id].minute).padStart(2, '0')) +
                         '분'
                       : '?시 ??분') +
                     '<small>' +
@@ -2442,7 +2519,11 @@
             (s) => s.id === shareStudentId && s.progress.stage === 'completed',
           );
           return page(
-            '<div class="top"><span class="brand">선생님 공유모드</span><div class="gallery-controls"><label class="secondary result-import">완료 기록 불러오기<input type="file" id="result-import" aria-label="완료 기록 불러오기" multiple accept=".json,application/json" hidden></label><button class="secondary" data-action="teacher-back">선생님 준비</button><button class="ghost" data-action="title">시작 화면으로</button></div></div>' +
+            '<div class="top"><span class="brand">선생님 공유모드</span><div class="gallery-controls">' +
+              (student()
+                ? '<button class="secondary" data-action="home">홈으로 돌아가기</button>'
+                : '') +
+              '<label class="secondary result-import">완료 기록 불러오기<input type="file" id="result-import" aria-label="완료 기록 불러오기" multiple accept=".json,application/json" hidden></label><button class="secondary" data-action="teacher-back">선생님 준비</button><button class="ghost" data-action="title">시작 화면으로</button></div></div>' +
               heading(
                 'TEACHER SHARING',
                 '우리 반의 하루를 함께 봐요',
@@ -2647,7 +2728,15 @@
               ' · ' +
               (c.minute < 720 ? '오전' : '오후') +
               '</h2><div class="answer-dialog-grid">' +
-              clockCard(student(), Math.floor(c.minute / 60) % 12 || 12, c.minute % 60) +
+              '<div><button class="dialog-flip" data-action="dialog-flip" aria-label="입력창 카드 뒤집기" aria-pressed="' +
+              dialogFlipped +
+              '">' +
+              (dialogFlipped
+                ? frontCard(student(), c)
+                : clockCard(student(), Math.floor(c.minute / 60) % 12 || 12, c.minute % 60)) +
+              '</button><p class="center subtle">' +
+              (dialogFlipped ? '다시 누르면 시계가 보여요' : '카드를 누르면 그림이 보여요') +
+              '</p></div>' +
               timeInput(
                 p.answers[c.id],
                 'reading',
@@ -2655,7 +2744,9 @@
                 p.wrong.includes(c.id),
                 data.phase === 'ended',
               ) +
-              '</div><div class="actions"><button class="primary" data-action="close-answer">입력 완료</button></div></dialog>';
+              '</div><div class="actions"><button class="secondary" data-action="leave-answer">나중에 이어하기</button><button class="primary" data-action="close-answer" ' +
+              (!validTime(p.answers[c.id]) ? 'disabled' : '') +
+              '>입력 완료</button></div></dialog>';
           }
           root.innerHTML = html;
           if (uploading && screen === 'teacher') {
@@ -2877,6 +2968,7 @@
               p.practice = newQuestion();
               saveProgress();
             }
+            if (button.dataset.mode === 'teacher-share') shareStudentId = '';
             navigate(button.dataset.mode);
             return;
           }
@@ -2919,10 +3011,16 @@
           }
           if (action === 'open-answer') {
             editingCardId = id;
+            dialogFlipped = false;
             render();
             return;
           }
-          if (action === 'close-answer') {
+          if (action === 'dialog-flip') {
+            dialogFlipped = !dialogFlipped;
+            render();
+            return;
+          }
+          if (action === 'close-answer' || action === 'leave-answer') {
             editingCardId = '';
             render();
             return;
@@ -3023,8 +3121,8 @@
                 answer = q ? q.answer : p.answers[id];
               const next =
                 action === 'answer-hour'
-                  ? { hour: Number(button.dataset.value), minute: answer?.minute ?? 0 }
-                  : { hour: answer?.hour ?? 1, minute: Number(button.dataset.value) };
+                  ? { hour: Number(button.dataset.value), minute: answer?.minute ?? null }
+                  : { hour: answer?.hour ?? null, minute: Number(button.dataset.value) };
               if (q) {
                 if (q.correct) return;
                 q.answer = next;
@@ -3040,7 +3138,7 @@
           }
           if (action === 'practice-check') {
             const q = p.practice;
-            if (q.correct || !q.answer) return;
+            if (q.correct || !validTime(q.answer)) return;
             if (q.answer.hour === q.hour && q.answer.minute === q.minute) {
               q.correct = true;
               p.solved++;
