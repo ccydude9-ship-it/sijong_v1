@@ -2029,6 +2029,13 @@
         opacity: 1;
         cursor: default;
       }
+      .practical-page:has(#completion-status) .timeline {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .practical-page:has(#completion-status) .timeline-card > .paper-card {
+        height: clamp(120px, 22vh, 200px);
+        width: auto;
+      }
     </style>
   </head>
   <body>
@@ -2067,6 +2074,18 @@
           }
           return b;
         };
+        function lessonOrder(cards) {
+          const sorted = [...cards].sort((a, b) => a.minute - b.minute).map((c) => c.id);
+          const middle = sorted.slice(1, -1);
+          let mixed = shuffle(middle);
+          for (let i = 0; i < 20 && mixed.some((id, j) => id === middle[j]); i++)
+            mixed = shuffle(middle);
+          if (mixed.some((id, j) => id === middle[j])) mixed = [...middle.slice(1), middle[0]];
+          return [sorted[0], ...mixed, sorted[7]];
+        }
+        function waiting() {
+          return screen === 'practical' && student()?.progress.stage === 'completed';
+        }
         function freshProgress(cards, previous) {
           return {
             ...(previous?.completedOrder || previous?.stage === 'completed'
@@ -2074,7 +2093,7 @@
               : {}),
             stage: 'reading',
             answers: {},
-            order: shuffle(cards.map((c) => c.id)),
+            order: lessonOrder(cards),
             flipped: {},
             wrong: [],
             solved: 0,
@@ -2278,6 +2297,7 @@
           };
         }
         function settingsButton() {
+          if (waiting()) return '';
           return (
             '<button class="ghost global-settings" data-action="teacher" aria-label="선생님 설정" title="선생님 설정">' +
             icon('settings') +
@@ -2294,6 +2314,7 @@
           );
         }
         function homeButton() {
+          if (waiting()) return '';
           return student()
             ? '<button class="ghost global-settings global-home" data-action="home" aria-label="홈" title="모드 선택 화면">' +
                 icon('home') +
@@ -2610,6 +2631,12 @@
           }
         }
         function status() {
+          const completion = document.getElementById('completion-status');
+          if (completion && live.enabled)
+            completion.textContent =
+              live.pending || live.needsAuth || live.conflict
+                ? '전송을 기다리고 있어요. 연결되면 자동으로 다시 보내요.'
+                : '선생님께 완성한 일과표를 보냈어요.';
           storageNote.textContent =
             storageError ||
             (live.enabled ? liveText() : '') ||
@@ -2635,6 +2662,8 @@
               : '';
         }
         function top() {
+          if (waiting())
+            return '<div class="top"><span class="chip">' + esc(label(student())) + '</span></div>';
           return (
             '<div class="top"><button class="chip" data-action="names" title="학생 선택">' +
             esc(label(student())) +
@@ -2887,7 +2916,7 @@
         }
         function renderNames() {
           return page(
-            '<div class="top"><span class="brand">◷ 째깍! 찰칵!</span></div>' +
+            '<div class="top"></div>' +
               heading(
                 'STEP 01 · SELECT YOUR NAME',
                 '내 이름을 골라요',
@@ -2918,7 +2947,7 @@
             [
               'practice',
               '연습모드',
-              '째깍! 읽어 봐',
+              '째깍! 읽어봐',
               '시계와 친해지는 시간',
               '◷',
               '가볍게 시작해요',
@@ -2926,7 +2955,7 @@
             [
               'practical',
               '실전모드',
-              '착착! 맞춰 봐',
+              '착착! 맞춰봐',
               '내 하루를 순서대로 착착',
               '<svg viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="13" width="18" height="38" rx="3"/><rect x="23" y="13" width="18" height="38" rx="3"/><rect x="43" y="13" width="18" height="38" rx="3"/><path d="M7 21h10M27 21h10M47 21h10M7 43h10M27 43h10M47 43h10"/><circle cx="12" cy="32" r="4"/><path d="m27 35 5-8 5 8ZM47 29h10v7H47z"/></svg>',
               '나만의 카드 8장',
@@ -2934,7 +2963,7 @@
             [
               'teacher-share',
               '공유모드',
-              '찰칵! 함께 봐',
+              '찰칵! 함께봐',
               '우리 반 친구들의 하루',
               '✦',
               '선생님과 함께 보기',
@@ -3007,7 +3036,7 @@
               ended() +
               heading(
                 '연습모드 · TICK TOCK',
-                '째깍! 지금 몇 시일까요?',
+                '째깍! 읽어봐',
                 '바늘이 가리키는 시각을 읽어 봐요. 천천히 해도 괜찮아요.',
               ) +
               notice() +
@@ -3054,7 +3083,7 @@
               ended() +
               heading(
                 '실전모드 · MY DAILY CARDS',
-                '착착! 시각을 읽어요',
+                '착착! 맞춰봐',
                 '카드 아래 시각을 눌러 답을 골라요. 위에 4장, 아래에 4장이에요.',
               ) +
               notice() +
@@ -3114,7 +3143,7 @@
               ended() +
               heading(
                 '실전모드 · MY DAY',
-                '내 하루를 순서대로!',
+                '착착! 맞춰봐',
                 '① 옮길 카드를 눌러요. ② 놓고 싶은 자리를 눌러요.',
               ) +
               notice() +
@@ -3165,9 +3194,7 @@
                   );
                 })
                 .join('') +
-              '</div><div class="actions"><button class="secondary" data-action="read-again" ' +
-              (data.phase === 'ended' ? 'disabled' : '') +
-              '>시각 다시 읽기</button><button class="primary" data-action="order-check" ' +
+              '</div><div class="actions"><button class="primary" data-action="order-check" ' +
               (data.phase === 'ended' ? 'disabled' : '') +
               '>완성하기</button></div>',
           );
@@ -3175,11 +3202,19 @@
         function renderCompleted() {
           return page(
             top() +
-              '<section class="panel completed"><span class="eyebrow">MY DAY IS COMPLETE</span><h1>내 하루 완성!</h1><p>' +
-              esc(label(student())) +
-              '의 멋진 하루가 완성되었어요.<br>선생님께 완성했다고 알려 주세요.</p><p class="subtle">다른 태블릿에서 했다면 완료 기록을 내보내 선생님께 전달해 주세요.</p><div class="actions"><button class="primary" data-action="export-result">완료 기록 내보내기</button><button class="secondary" data-action="read-again" ' +
-              (data.phase === 'ended' ? 'disabled' : '') +
-              '>시각 다시 읽기</button></div></section>',
+              heading(
+                '실전모드',
+                '착착! 맞춰봐',
+                '완성한 카드를 눌러 살펴보며 선생님을 기다려요.',
+              ) +
+              '<p class="center" id="completion-status">' +
+              (live.enabled
+                ? live.pending
+                  ? '완성한 일과표를 보내고 있어요.'
+                  : '완성한 일과표가 저장되었어요.'
+                : '이 기기에 완성한 일과표를 저장했어요.') +
+              '</p>' +
+              timeline(student()),
           );
         }
         function timeline(s) {
@@ -3195,7 +3230,7 @@
                 const c = s.cards.find((c) => c.id === id);
                 return (
                   '<article class="timeline-card"' +
-                  (screen === 'teacher-share'
+                  (screen === 'teacher-share' || waiting()
                     ? ' role="button" tabindex="0" data-action="present-card" data-id="' +
                       esc(c.id) +
                       '" aria-label="' +
@@ -3228,7 +3263,7 @@
             '<div class="top"><span class="chip">선생님</span></div>' +
               heading(
                 'TEACHER SHARING',
-                '우리 반의 하루를 함께 봐요',
+                '찰칵! 함께봐',
                 '학생 이름을 누르면 지금 입력한 시각과 카드 배열을 볼 수 있어요.',
               ) +
               '<p class="teacher-warning" id="live-status">' +
@@ -3263,13 +3298,7 @@
                 .join('') +
               '</div>' +
               (chosen
-                ? '<h2 class="center">' +
-                  esc(label(chosen)) +
-                  '의 하루</h2>' +
-                  '<p class="center">' +
-                  esc(liveStage(chosen)) +
-                  '</p>' +
-                  timeline(chosen)
+                ? timeline(chosen)
                 : '<p class="center subtle">학생 이름을 눌러 활동 중인 모습도 함께 봐요.</p>'),
           );
         }
@@ -3411,6 +3440,12 @@
           );
         }
         function render() {
+          if (
+            screen === 'menu' &&
+            student()?.progress.stage === 'completed' &&
+            live.session?.role !== 'teacher'
+          )
+            screen = 'practical';
           const scrollPosition = { x: window.scrollX, y: window.scrollY };
           const oldDialogScroll = root.querySelector('dialog')?.scrollTop || 0;
           const active = document.activeElement;
@@ -3468,8 +3503,10 @@
               (!validTime(p.answers[c.id]) ? 'disabled' : '') +
               '>입력 완료</button></div></dialog>';
           }
-          if (screen === 'teacher-share' && presentationCardId) {
-            const owner = data.students.find((s) => s.id === shareStudentId);
+          if ((screen === 'teacher-share' || waiting()) && presentationCardId) {
+            const owner = waiting()
+              ? student()
+              : data.students.find((s) => s.id === shareStudentId);
             const card = owner?.cards.find((c) => c.id === presentationCardId);
             if (card)
               html +=
@@ -3832,6 +3869,17 @@
             id = button.dataset.id,
             s = student(),
             p = s?.progress;
+          if (
+            waiting() &&
+            ![
+              'present-card',
+              'presentation-flip',
+              'leave-answer',
+              'live-reconnect',
+              'live-use-server',
+            ].includes(action)
+          )
+            return;
           try {
             if (await handleLiveAction(action, id, button)) return;
           } catch (err) {
@@ -3859,7 +3907,7 @@
           }
           if (action === 'select') {
             studentId = id;
-            navigate('menu');
+            navigate(student().progress.stage === 'completed' ? 'practical' : 'menu');
             return;
           }
           if (action === 'home') {
@@ -4078,6 +4126,7 @@
               feedback('표시된 시각을 다시 읽어 볼까요? 아직 안 고른 시각도 확인해 주세요.');
             } else {
               p.stage = 'ordering';
+              p.order = lessonOrder(s.cards);
               p.wrong = [];
               saveProgress();
               navigate('practical');

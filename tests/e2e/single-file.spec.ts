@@ -176,7 +176,12 @@ test('own cards can be read ordered and shared with serverless grading', async (
     await page.getByRole('button', { name: '입력 완료' }).click();
   }
   await page.getByRole('button', { name: '시각 확인하기' }).click();
-  await expect(page.getByRole('heading', { name: '내 하루를 순서대로!' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '착착! 맞춰봐' })).toBeVisible();
+  await expect(page.locator('.order-tile').first()).toBeDisabled();
+  await expect(page.locator('.order-tile').last()).toBeDisabled();
+  await expect(page.locator('.order-tile').first()).toContainText('일어나기');
+  await expect(page.locator('.order-tile').last()).toContainText('잠자기');
+  await expect(page.locator('.order-tile:not(:disabled)')).toHaveCount(6);
   const orderRows = await page.locator('[data-order-id]').evaluateAll((nodes) =>
     nodes.map((node) => {
       const box = node.getBoundingClientRect();
@@ -226,48 +231,28 @@ test('own cards can be read ordered and shared with serverless grading', async (
   }
   await expect(page.locator('.order-tile:disabled')).toHaveCount(8);
   await page.getByRole('button', { name: '완성하기', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '내 하루 완성!' })).toBeVisible();
-  await expect(page.getByRole('button', { name: '완료 기록 내보내기' })).toBeVisible();
-  const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: '완료 기록 내보내기' }).click();
-  const download = await downloadPromise;
-  const exported = JSON.parse(readFileSync((await download.path())!, 'utf8'));
-  expect(exported.kind).toBe('sijong-student-result');
-  expect(exported.student.progress.stage).toBe('completed');
-  expect(exported.student.progress.order).toHaveLength(8);
+  await expect(page.locator('.timeline-card')).toHaveCount(8);
+  await expect(page.getByRole('button', { name: '홈', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '선생님 설정' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '시각 다시 읽기' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '완료 기록 내보내기' })).toHaveCount(0);
+  await page.getByRole('button', { name: '별이의 일어나기 크게 보기', exact: true }).click();
+  const popup = page.getByRole('dialog');
+  await popup.getByRole('button', { name: '발표 카드 뒤집기' }).click();
+  await expect(popup.locator('.clock-face')).toBeVisible();
+  await popup.getByRole('button', { name: '닫기', exact: true }).click();
+  await page.screenshot({ path: '.local/classroom/completed-waiting.png' });
   await page.reload();
   await page.getByRole('button', { name: '게임 시작' }).click();
   await page.getByRole('button', { name: '별이', exact: true }).click();
-  await page.getByRole('button', { name: /공유모드/ }).click();
-  await page.getByRole('button', { name: '별이 일과표 보기', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '별이의 하루' })).toBeVisible();
   await expect(page.locator('.timeline-card')).toHaveCount(8);
-  const sharedBottom = await page
-    .locator('.timeline-card')
-    .last()
-    .evaluate((el) => el.getBoundingClientRect().bottom);
-  expect(sharedBottom).toBeLessThan(768);
-  await expect(page.getByRole('button', { name: '하늘 일과표 보기', exact: true })).toBeEnabled();
-  await expect(page.getByRole('button', { name: '일과표 인쇄하기' })).toHaveCount(0);
-  await page.getByRole('button', { name: '별이의 일어나기 크게 보기', exact: true }).click();
-  const popup = page.getByRole('dialog', { name: '일과 카드 발표' });
-  await expect(popup).toBeVisible();
-  await expect(popup.locator('.card-caption')).toContainText('일어나기');
-  await popup.getByRole('button', { name: '발표 카드 뒤집기' }).click();
-  await expect(popup.locator('.clock-face')).toBeVisible();
-  await popup.getByRole('button', { name: '발표 카드 뒤집기' }).click();
-  await expect(popup.locator('.card-caption')).toContainText('일어나기');
-  await page.screenshot({ path: '.local/classroom/presentation.png' });
-  await popup.getByRole('button', { name: '닫기', exact: true }).click();
-  await page.getByRole('button', { name: '홈', exact: true }).click();
-  await page.getByRole('button', { name: /실전모드/ }).click();
-  await expect(page.locator('[data-reading-card]')).toHaveCount(8);
-  await expect(page.locator('.answer-summary .time-blank')).toHaveCount(16);
-  await page.getByRole('button', { name: '홈', exact: true }).click();
-  await page.getByRole('button', { name: /공유모드/ }).click();
+  await expect(page.getByRole('button', { name: '홈', exact: true })).toHaveCount(0);
+  await page.reload();
+  await page.getByRole('button', { name: '선생님 설정' }).click();
+  await page.getByRole('button', { name: '공유모드 열기' }).click();
   await page.getByRole('button', { name: '별이 일과표 보기', exact: true }).click();
-  await expect(page.locator('.timeline-time .time-blank')).toHaveCount(0);
   await expect(page.locator('.timeline-card')).toHaveCount(8);
+  await expect(page.getByRole('heading', { name: '별이의 하루' })).toHaveCount(0);
 });
 
 test('student photo is editable persistent and displayed as a round name avatar', async ({
@@ -450,9 +435,9 @@ test('teacher imports multiple tablet results without overwriting another studen
   await expect(page.getByRole('button', { name: '별이 일과표 보기', exact: true })).toBeEnabled();
   await expect(page.getByRole('button', { name: '하늘 일과표 보기', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '별이 일과표 보기', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '별이의 하루' })).toBeVisible();
+  await expect(page.locator('.timeline-card')).toHaveCount(8);
   await page.getByRole('button', { name: '하늘 일과표 보기', exact: true }).click();
-  await expect(page.getByRole('heading', { name: '하늘의 하루' })).toBeVisible();
+  await expect(page.locator('.timeline-card').first()).toContainText('하늘');
   expect(
     await page.evaluate(() => JSON.parse(localStorage.getItem('sijong.single.v1')!).students[2]),
   ).toEqual(students[2]);

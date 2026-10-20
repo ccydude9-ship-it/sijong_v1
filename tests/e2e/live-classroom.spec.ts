@@ -160,8 +160,25 @@ test('teacher sees two independent tablets before completion and offline edits r
     await expect(teacher.locator('.timeline-card h2')).toHaveText(expectedOrder, {
       timeout: 10000,
     });
-    await a.getByRole('button', { name: '선생님 설정', exact: true }).click();
-    await expect(a.getByLabel('선생님 비밀번호', { exact: true })).toBeVisible();
+    const sortedIds = await a.evaluate(() =>
+      JSON.parse(localStorage.getItem('sijong.single.v1')!)
+        .students[0].cards.sort((x: any, y: any) => x.minute - y.minute)
+        .map((c: any) => c.id),
+    );
+    for (let i = 0; i < sortedIds.length; i++) {
+      const card = a.locator('.order-tile[data-id="' + sortedIds[i] + '"]');
+      if (await card.isDisabled()) continue;
+      await card.click();
+      await a.locator('.order-tile[data-position="' + i + '"]').click();
+    }
+    await a.getByRole('button', { name: '완성하기', exact: true }).click();
+    await expect(a.locator('.timeline-card')).toHaveCount(8);
+    await expect(a.getByRole('button', { name: '홈', exact: true })).toHaveCount(0);
+    await expect(a.getByRole('button', { name: '선생님 설정', exact: true })).toHaveCount(0);
+    await expect(
+      teacher.getByRole('button', { name: '별이 일과표 보기', exact: true }),
+    ).toContainText('내 하루 완성', { timeout: 10000 });
+    await expect(a.locator('#completion-status')).toContainText('선생님께', { timeout: 10000 });
     expect(errors).toEqual([]);
   } finally {
     await Promise.all(contexts.map((c) => c.close()));
