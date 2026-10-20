@@ -173,8 +173,8 @@ test('teacher sees two independent tablets before completion and offline edits r
     }
     await a.getByRole('button', { name: '완성하기', exact: true }).click();
     await expect(a.locator('.timeline-card')).toHaveCount(8);
-    await expect(a.getByRole('button', { name: '홈', exact: true })).toHaveCount(0);
-    await expect(a.getByRole('button', { name: '선생님 설정', exact: true })).toHaveCount(0);
+    await expect(a.getByRole('button', { name: '홈', exact: true })).toBeVisible();
+    await expect(a.getByRole('button', { name: '선생님 설정', exact: true })).toBeVisible();
     await expect(
       teacher.getByRole('button', { name: '별이 일과표 보기', exact: true }),
     ).toContainText('내 하루 완성', { timeout: 10000 });

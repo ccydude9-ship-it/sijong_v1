@@ -2036,6 +2036,30 @@
         height: clamp(120px, 22vh, 200px);
         width: auto;
       }
+      .presentation-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 44px;
+        height: 52px;
+        padding: 0;
+        font-size: 32px;
+        display: grid;
+        place-items: center;
+      }
+      .presentation-arrow.previous {
+        left: 12px;
+      }
+      .presentation-arrow.next {
+        right: 12px;
+      }
+      .presentation-dialog .presentation-flip {
+        width: min(42vh, calc(100% - 88px));
+      }
+      .presentation-dialog .presentation-flip .paper-card {
+        width: 100%;
+        height: auto;
+      }
     </style>
   </head>
   <body>
@@ -2297,7 +2321,6 @@
           };
         }
         function settingsButton() {
-          if (waiting()) return '';
           return (
             '<button class="ghost global-settings" data-action="teacher" aria-label="선생님 설정" title="선생님 설정">' +
             icon('settings') +
@@ -2314,7 +2337,6 @@
           );
         }
         function homeButton() {
-          if (waiting()) return '';
           return student()
             ? '<button class="ghost global-settings global-home" data-action="home" aria-label="홈" title="모드 선택 화면">' +
                 icon('home') +
@@ -3440,12 +3462,6 @@
           );
         }
         function render() {
-          if (
-            screen === 'menu' &&
-            student()?.progress.stage === 'completed' &&
-            live.session?.role !== 'teacher'
-          )
-            screen = 'practical';
           const scrollPosition = { x: window.scrollX, y: window.scrollY };
           const oldDialogScroll = root.querySelector('dialog')?.scrollTop || 0;
           const active = document.activeElement;
@@ -3508,11 +3524,22 @@
               ? student()
               : data.students.find((s) => s.id === shareStudentId);
             const card = owner?.cards.find((c) => c.id === presentationCardId);
+            const order =
+              owner?.progress.completedOrder ||
+              (owner?.progress.stage === 'reading'
+                ? owner.cards.map((c) => c.id)
+                : owner?.progress.order) ||
+              [];
+            const position = order.indexOf(presentationCardId);
             if (card)
               html +=
                 '<dialog class="answer-dialog presentation-dialog" aria-label="일과 카드 발표"><h2>' +
                 esc(card.title) +
-                '</h2><button class="presentation-flip" data-action="presentation-flip" aria-label="발표 카드 뒤집기" aria-pressed="' +
+                '</h2><button class="secondary presentation-arrow previous" data-action="presentation-prev" aria-label="이전 카드" ' +
+                (position === 0 ? 'disabled' : '') +
+                '>‹</button><button class="secondary presentation-arrow next" data-action="presentation-next" aria-label="다음 카드" ' +
+                (position === order.length - 1 ? 'disabled' : '') +
+                '>›</button><button class="presentation-flip" data-action="presentation-flip" aria-label="발표 카드 뒤집기" aria-pressed="' +
                 presentationFlipped +
                 '">' +
                 (presentationFlipped
@@ -3874,6 +3901,10 @@
             ![
               'present-card',
               'presentation-flip',
+              'presentation-prev',
+              'presentation-next',
+              'home',
+              'teacher',
               'leave-answer',
               'live-reconnect',
               'live-use-server',
@@ -3900,6 +3931,23 @@
             render();
             return;
           }
+          if (action === 'presentation-prev' || action === 'presentation-next') {
+            const owner = waiting()
+              ? student()
+              : data.students.find((s) => s.id === shareStudentId);
+            const order =
+              owner.progress.completedOrder ||
+              (owner.progress.stage === 'reading'
+                ? owner.cards.map((c) => c.id)
+                : owner.progress.order);
+            const next =
+              order.indexOf(presentationCardId) + (action === 'presentation-next' ? 1 : -1);
+            if (next < 0 || next >= order.length) return;
+            presentationCardId = order[next];
+            presentationFlipped = false;
+            render();
+            return;
+          }
           if (action === 'presentation-flip') {
             presentationFlipped = !presentationFlipped;
             render();
@@ -3912,21 +3960,18 @@
           }
           if (action === 'home') {
             if (screen === 'teacher' && !confirmTeacherLeave()) return;
-            if ((screen === 'practice' || screen === 'practical') && editAllowed()) {
-              if (p.stage === 'completed') {
-                p.solved = 0;
-                p.practice = null;
-              } else s.progress = freshProgress(s.cards, p);
+            if (
+              (screen === 'practice' || screen === 'practical') &&
+              p.stage !== 'completed' &&
+              editAllowed()
+            ) {
+              s.progress = freshProgress(s.cards, p);
               saveProgress();
             }
             navigate('menu');
             return;
           }
           if (action === 'mode') {
-            if (button.dataset.mode === 'practical' && p.stage === 'completed' && editAllowed()) {
-              Object.assign(p, freshProgress(s.cards, p));
-              saveProgress();
-            }
             if (
               button.dataset.mode === 'practice' &&
               (!p.practice ||
