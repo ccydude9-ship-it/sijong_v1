@@ -1988,6 +1988,28 @@
       .answer-dialog h2 {
         padding-right: 60px;
       }
+      .timeline-card[role='button'] {
+        cursor: pointer;
+      }
+      .presentation-dialog {
+        width: min(90vw, 560px);
+        text-align: center;
+      }
+      .presentation-flip {
+        display: block;
+        padding: 0;
+        margin: auto;
+        background: transparent;
+      }
+      .presentation-dialog .paper-card {
+        height: min(60vh, 540px);
+        width: auto;
+        aspect-ratio: 7 / 10;
+      }
+      .presentation-dialog .card-name,
+      .presentation-dialog .card-caption {
+        font-size: clamp(14px, 2.5vh, 22px);
+      }
     </style>
   </head>
   <body>
@@ -2187,6 +2209,8 @@
         }
         let selectedOrderId = '',
           shareStudentId = '',
+          presentationCardId = '',
+          presentationFlipped = false,
           editingCardId = '',
           dialogFlipped = false,
           screen = 'title',
@@ -2869,7 +2893,7 @@
               '실전모드',
               '착착! 맞춰 봐',
               '내 하루를 순서대로 착착',
-              '▧',
+              '<svg viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="13" width="18" height="38" rx="3"/><rect x="23" y="13" width="18" height="38" rx="3"/><rect x="43" y="13" width="18" height="38" rx="3"/><path d="M7 21h10M27 21h10M47 21h10M7 43h10M27 43h10M47 43h10"/><circle cx="12" cy="32" r="4"/><path d="m27 35 5-8 5 8ZM47 29h10v7H47z"/></svg>',
               '나만의 카드 8장',
             ],
             [
@@ -3129,7 +3153,15 @@
               .map((id) => {
                 const c = s.cards.find((c) => c.id === id);
                 return (
-                  '<article class="timeline-card"><span class="timeline-time">' +
+                  '<article class="timeline-card"' +
+                  (screen === 'teacher-share'
+                    ? ' role="button" tabindex="0" data-action="present-card" data-id="' +
+                      esc(c.id) +
+                      '" aria-label="' +
+                      esc(c.title) +
+                      ' 크게 보기"'
+                    : '') +
+                  '><span class="timeline-time">' +
                   (s.progress.stage === 'reading'
                     ? (s.progress.answers[c.id]?.hour ?? blankTime) +
                       '시 ' +
@@ -3196,8 +3228,7 @@
                   '<p class="center">' +
                   esc(liveStage(chosen)) +
                   '</p>' +
-                  timeline(chosen) +
-                  '<div class="actions"><button class="secondary" data-action="print">일과표 인쇄하기</button></div>'
+                  timeline(chosen)
                 : '<p class="center subtle">학생 이름을 눌러 활동 중인 모습도 함께 봐요.</p>'),
           );
         }
@@ -3396,6 +3427,21 @@
               (!validTime(p.answers[c.id]) ? 'disabled' : '') +
               '>입력 완료</button></div></dialog>';
           }
+          if (screen === 'teacher-share' && presentationCardId) {
+            const owner = data.students.find((s) => s.id === shareStudentId);
+            const card = owner?.cards.find((c) => c.id === presentationCardId);
+            if (card)
+              html +=
+                '<dialog class="answer-dialog presentation-dialog" aria-label="일과 카드 발표"><h2>' +
+                esc(card.title) +
+                '</h2><button class="presentation-flip" data-action="presentation-flip" aria-label="발표 카드 뒤집기" aria-pressed="' +
+                presentationFlipped +
+                '">' +
+                (presentationFlipped
+                  ? clockCard(owner, Math.floor(card.minute / 60) % 12 || 12, card.minute % 60)
+                  : frontCard(owner, card)) +
+                '</button><p class="center">카드를 누르면 그림과 시계를 번갈아 볼 수 있어요.</p></dialog>';
+          }
           html += homeButton() + settingsButton();
           if (live.conflict)
             html +=
@@ -3413,6 +3459,7 @@
           if (dialog) {
             dialog.addEventListener('cancel', () => {
               editingCardId = '';
+              presentationCardId = '';
             });
             dialog.insertAdjacentHTML(
               'afterbegin',
@@ -3432,6 +3479,7 @@
           status();
         }
         function navigate(next) {
+          presentationCardId = '';
           selectedOrderId = '';
           editingCardId = '';
           screen = next;
@@ -3688,6 +3736,15 @@
           }
           return false;
         }
+        root.addEventListener('keydown', (e) => {
+          if (
+            (e.key === 'Enter' || e.key === ' ') &&
+            e.target.matches('[data-action="present-card"]')
+          ) {
+            e.preventDefault();
+            e.target.click();
+          }
+        });
         root.addEventListener('submit', async (e) => {
           if (e.target.id !== 'live-login-form') return;
           e.preventDefault();
@@ -3748,6 +3805,17 @@
             navigate('title');
             return;
           }
+          if (action === 'present-card') {
+            presentationCardId = id;
+            presentationFlipped = false;
+            render();
+            return;
+          }
+          if (action === 'presentation-flip') {
+            presentationFlipped = !presentationFlipped;
+            render();
+            return;
+          }
           if (action === 'select') {
             studentId = id;
             navigate('menu');
@@ -3755,10 +3823,21 @@
           }
           if (action === 'home') {
             if (screen === 'teacher' && !confirmTeacherLeave()) return;
+            if ((screen === 'practice' || screen === 'practical') && editAllowed()) {
+              if (p.stage === 'completed') {
+                p.solved = 0;
+                p.practice = null;
+              } else s.progress = freshProgress(s.cards);
+              saveProgress();
+            }
             navigate('menu');
             return;
           }
           if (action === 'mode') {
+            if (button.dataset.mode === 'practical' && p.stage === 'completed' && editAllowed()) {
+              Object.assign(p, freshProgress(s.cards));
+              saveProgress();
+            }
             if (
               button.dataset.mode === 'practice' &&
               (!p.practice ||
@@ -3825,6 +3904,7 @@
             return;
           }
           if (action === 'close-answer' || action === 'leave-answer') {
+            presentationCardId = '';
             editingCardId = '';
             render();
             return;

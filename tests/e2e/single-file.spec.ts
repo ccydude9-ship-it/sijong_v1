@@ -38,9 +38,7 @@ test('single file opens offline and keeps title name and free mode navigation', 
   expect(remote).toEqual([]);
 });
 
-test('personal reading drafts survive home reload and another student selection', async ({
-  page,
-}) => {
+test('home resets practical answers without affecting another student', async ({ page }) => {
   await page.getByRole('button', { name: '게임 시작' }).click();
   await page.getByRole('button', { name: '별이', exact: true }).click();
   await page.getByRole('button', { name: /실전모드/ }).click();
@@ -70,8 +68,9 @@ test('personal reading drafts survive home reload and another student selection'
     page
       .locator('[data-reading-card]')
       .first()
-      .getByRole('button', { name: /시각 고르기/ }),
-  ).toContainText('5시 30분');
+      .getByRole('button', { name: /시각 고르기/ })
+      .locator('.time-blank'),
+  ).toHaveCount(2);
 });
 
 test('teacher changes names cards and pictures within the one file app', async ({ page }) => {
@@ -248,6 +247,21 @@ test('own cards can be read ordered and shared with serverless grading', async (
     .evaluate((el) => el.getBoundingClientRect().bottom);
   expect(sharedBottom).toBeLessThan(768);
   await expect(page.getByRole('button', { name: '하늘 일과표 보기', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: '일과표 인쇄하기' })).toHaveCount(0);
+  await page.getByRole('button', { name: '별이의 일어나기 크게 보기', exact: true }).click();
+  const popup = page.getByRole('dialog', { name: '일과 카드 발표' });
+  await expect(popup).toBeVisible();
+  await expect(popup.locator('.card-caption')).toContainText('일어나기');
+  await popup.getByRole('button', { name: '발표 카드 뒤집기' }).click();
+  await expect(popup.locator('.clock-face')).toBeVisible();
+  await popup.getByRole('button', { name: '발표 카드 뒤집기' }).click();
+  await expect(popup.locator('.card-caption')).toContainText('일어나기');
+  await page.screenshot({ path: '.local/classroom/presentation.png' });
+  await popup.getByRole('button', { name: '닫기', exact: true }).click();
+  await page.getByRole('button', { name: '홈', exact: true }).click();
+  await page.getByRole('button', { name: /실전모드/ }).click();
+  await expect(page.locator('[data-reading-card]')).toHaveCount(8);
+  await expect(page.locator('.answer-summary .time-blank')).toHaveCount(16);
 });
 
 test('student photo is editable persistent and displayed as a round name avatar', async ({
@@ -632,4 +646,23 @@ test('dialog number grid and submit button remain fixed from empty to complete t
   await page.getByRole('dialog').getByRole('button', { name: '30분', exact: true }).click();
   expect(await positions()).toEqual(initial);
   await page.screenshot({ path: '.local/classroom/aligned-dialog.png' });
+});
+
+test('home clears practice count and answer for a fresh attempt', async ({ page }) => {
+  await page.getByRole('button', { name: '게임 시작' }).click();
+  await page.getByRole('button', { name: '별이', exact: true }).click();
+  await page.getByRole('button', { name: /연습모드/ }).click();
+  const q = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('sijong.single.v1')!).students[0].progress.practice,
+  );
+  await page.getByRole('button', { name: q.hour + '시', exact: true }).click();
+  await page
+    .getByRole('button', { name: String(q.minute).padStart(2, '0') + '분', exact: true })
+    .click();
+  await page.getByRole('button', { name: '정답 확인하기' }).click();
+  await expect(page.locator('.stat')).toContainText('1개의 시계');
+  await page.getByRole('button', { name: '홈', exact: true }).click();
+  await page.getByRole('button', { name: /연습모드/ }).click();
+  await expect(page.locator('.stat')).toContainText('0개의 시계');
+  await expect(page.locator('.time-readout .time-blank')).toHaveCount(2);
 });
