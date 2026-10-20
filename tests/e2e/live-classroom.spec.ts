@@ -149,8 +149,8 @@ test('teacher sees two independent tablets before completion and offline edits r
     await expect(
       teacher.getByRole('button', { name: '별이 일과표 보기', exact: true }),
     ).toContainText('순서 맞추는 중', { timeout: 10000 });
-    await a.locator('.order-tile').first().click();
-    await a.getByRole('button', { name: '2번째 자리에 놓기', exact: true }).click();
+    await a.locator('.order-tile:not(:disabled)').first().click();
+    await a.locator('.order-card.target .order-tile').first().click();
     const expectedOrder = await a.evaluate(() => {
       const s = JSON.parse(localStorage.getItem('sijong.single.v1')!).students[0];
       return s.progress.order.map(

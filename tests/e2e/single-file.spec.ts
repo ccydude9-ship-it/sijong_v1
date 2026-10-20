@@ -224,6 +224,7 @@ test('own cards can be read ordered and shared with serverless grading', async (
         .click();
     }
   }
+  await expect(page.locator('.order-tile:disabled')).toHaveCount(8);
   await page.getByRole('button', { name: '완성하기', exact: true }).click();
   await expect(page.getByRole('heading', { name: '내 하루 완성!' })).toBeVisible();
   await expect(page.getByRole('button', { name: '완료 기록 내보내기' })).toBeVisible();
@@ -262,6 +263,11 @@ test('own cards can be read ordered and shared with serverless grading', async (
   await page.getByRole('button', { name: /실전모드/ }).click();
   await expect(page.locator('[data-reading-card]')).toHaveCount(8);
   await expect(page.locator('.answer-summary .time-blank')).toHaveCount(16);
+  await page.getByRole('button', { name: '홈', exact: true }).click();
+  await page.getByRole('button', { name: /공유모드/ }).click();
+  await page.getByRole('button', { name: '별이 일과표 보기', exact: true }).click();
+  await expect(page.locator('.timeline-time .time-blank')).toHaveCount(0);
+  await expect(page.locator('.timeline-card')).toHaveCount(8);
 });
 
 test('student photo is editable persistent and displayed as a round name avatar', async ({
@@ -665,4 +671,19 @@ test('home clears practice count and answer for a fresh attempt', async ({ page 
   await page.getByRole('button', { name: /연습모드/ }).click();
   await expect(page.locator('.stat')).toContainText('0개의 시계');
   await expect(page.locator('.time-readout .time-blank')).toHaveCount(2);
+});
+
+test('student name badges stay aligned and return to student selection', async ({ page }) => {
+  await page.getByRole('button', { name: '게임 시작' }).click();
+  await page.getByRole('button', { name: '별이', exact: true }).click();
+  const initial = await page.locator('.top .chip').boundingBox();
+  for (const mode of ['연습모드', '실전모드', '공유모드']) {
+    await page.getByRole('button', { name: new RegExp(mode) }).click();
+    const box = await page.locator('.top .chip').boundingBox();
+    expect(box!.x).toBe(initial!.x);
+    expect(box!.y).toBe(initial!.y);
+    await page.getByRole('button', { name: '홈', exact: true }).click();
+  }
+  await page.getByRole('button', { name: '✦ 별이', exact: true }).click();
+  await expect(page.getByRole('button', { name: '하늘', exact: true })).toBeVisible();
 });

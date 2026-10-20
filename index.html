@@ -2010,6 +2010,25 @@
       .presentation-dialog .card-caption {
         font-size: clamp(14px, 2.5vh, 22px);
       }
+      .page {
+        padding-left: 24px;
+        padding-right: 24px;
+        padding-top: 14px;
+      }
+      .top > .chip {
+        min-height: 46px;
+        margin: 0;
+        font-size: 16px;
+        line-height: 24px;
+      }
+      .order-card.locked {
+        border-color: #75b59a;
+        background: #eef8f2;
+      }
+      .order-card.locked .order-tile:disabled {
+        opacity: 1;
+        cursor: default;
+      }
     </style>
   </head>
   <body>
@@ -2048,8 +2067,11 @@
           }
           return b;
         };
-        function freshProgress(cards) {
+        function freshProgress(cards, previous) {
           return {
+            ...(previous?.completedOrder || previous?.stage === 'completed'
+              ? { completedOrder: [...(previous.completedOrder || previous.order)] }
+              : {}),
             stage: 'reading',
             answers: {},
             order: shuffle(cards.map((c) => c.id)),
@@ -2158,6 +2180,15 @@
                 p.order.length !== 8 ||
                 new Set(p.order).size !== 8 ||
                 !p.order.every(hasCard)
+              )
+                return false;
+              if (
+                p.completedOrder &&
+                (!Array.isArray(p.completedOrder) ||
+                  p.completedOrder.length !== 8 ||
+                  p.completedOrder.some(
+                    (id, i) => id !== [...s.cards].sort((a, b) => a.minute - b.minute)[i].id,
+                  ))
               )
                 return false;
               if (
@@ -2513,7 +2544,7 @@
         function liveStage(s) {
           const n = Object.values(s.progress.answers).filter(validTime).length;
           if (live.meta[s.id]?.screen === 'practice') return '활동 1 · 시계 연습 중';
-          if (s.progress.stage === 'completed') return '내 하루 완성';
+          if (s.progress.completedOrder || s.progress.stage === 'completed') return '내 하루 완성';
           if (s.progress.stage === 'ordering') return '활동 2-2 · 순서 맞추는 중';
           return '활동 2-1 · 시각 입력 ' + n + '/8';
         }
@@ -2604,7 +2635,11 @@
               : '';
         }
         function top() {
-          return '<div class="top"><span class="chip">' + esc(label(student())) + '</span></div>';
+          return (
+            '<div class="top"><button class="chip" data-action="names" title="학생 선택">' +
+            esc(label(student())) +
+            '</button></div>'
+          );
         }
         function page(body) {
           return (
@@ -3094,11 +3129,12 @@
               p.order
                 .map((id, i) => {
                   const c = s.cards.find((c) => c.id === id),
+                    locked = [...s.cards].sort((a, b) => a.minute - b.minute)[i].id === id,
                     chosen = selectedOrderId === id,
-                    target = !!selected && !chosen;
+                    target = !!selected && !chosen && !locked;
                   return (
                     '<article class="order-card ' +
-                    (chosen ? 'selected ' : target ? 'target ' : '') +
+                    (locked ? 'locked ' : chosen ? 'selected ' : target ? 'target ' : '') +
                     (p.wrong.includes(id) ? 'wrong' : '') +
                     '" data-order-id="' +
                     esc(id) +
@@ -3112,7 +3148,7 @@
                     '" aria-pressed="' +
                     chosen +
                     '" ' +
-                    (data.phase === 'ended' ? 'disabled' : '') +
+                    (data.phase === 'ended' || locked ? 'disabled' : '') +
                     '>' +
                     '<span class="order-number">' +
                     (i + 1) +
@@ -3139,7 +3175,7 @@
         function renderCompleted() {
           return page(
             top() +
-              '<section class="panel completed"><div class="confetti" aria-hidden="true">✦ ☀ ✦</div><span class="eyebrow">MY DAY IS COMPLETE</span><h1>내 하루 완성!</h1><p>' +
+              '<section class="panel completed"><span class="eyebrow">MY DAY IS COMPLETE</span><h1>내 하루 완성!</h1><p>' +
               esc(label(student())) +
               '의 멋진 하루가 완성되었어요.<br>선생님께 완성했다고 알려 주세요.</p><p class="subtle">다른 태블릿에서 했다면 완료 기록을 내보내 선생님께 전달해 주세요.</p><div class="actions"><button class="primary" data-action="export-result">완료 기록 내보내기</button><button class="secondary" data-action="read-again" ' +
               (data.phase === 'ended' ? 'disabled' : '') +
@@ -3147,6 +3183,11 @@
           );
         }
         function timeline(s) {
+          if (s.progress.completedOrder)
+            s = {
+              ...s,
+              progress: { ...s.progress, stage: 'completed', order: s.progress.completedOrder },
+            };
           return (
             '<div class="timeline">' +
             (s.progress.stage === 'reading' ? s.cards.map((c) => c.id) : s.progress.order)
@@ -3184,7 +3225,7 @@
         function renderSharing() {
           const chosen = data.students.find((s) => s.id === shareStudentId);
           return page(
-            '<div class="top"><span class="brand">선생님 공유모드</span></div>' +
+            '<div class="top"><span class="chip">선생님</span></div>' +
               heading(
                 'TEACHER SHARING',
                 '우리 반의 하루를 함께 봐요',
@@ -3827,7 +3868,7 @@
               if (p.stage === 'completed') {
                 p.solved = 0;
                 p.practice = null;
-              } else s.progress = freshProgress(s.cards);
+              } else s.progress = freshProgress(s.cards, p);
               saveProgress();
             }
             navigate('menu');
@@ -3835,7 +3876,7 @@
           }
           if (action === 'mode') {
             if (button.dataset.mode === 'practical' && p.stage === 'completed' && editAllowed()) {
-              Object.assign(p, freshProgress(s.cards));
+              Object.assign(p, freshProgress(s.cards, p));
               saveProgress();
             }
             if (
@@ -4050,6 +4091,8 @@
           }
           if (action === 'pick-place') {
             if (p.stage !== 'ordering') return;
+            const expected = [...s.cards].sort((a, b) => a.minute - b.minute).map((c) => c.id);
+            if (expected[p.order.indexOf(id)] === id) return;
             if (!selectedOrderId) {
               selectedOrderId = id;
               render();
@@ -4064,7 +4107,7 @@
               to = p.order.indexOf(id);
             if (from < 0 || to < 0) return;
             keepScroll(() => {
-              p.order.splice(to, 0, p.order.splice(from, 1)[0]);
+              [p.order[from], p.order[to]] = [p.order[to], p.order[from]];
               selectedOrderId = '';
               p.wrong = [];
               message = '';
@@ -4073,6 +4116,7 @@
             return;
           }
           if (action === 'read-again') {
+            if (p.stage === 'completed') p.completedOrder = [...p.order];
             p.stage = 'reading';
             p.wrong = [];
             saveProgress();
@@ -4088,6 +4132,7 @@
               feedback('표시된 카드의 순서를 다시 살펴볼까요?');
             } else {
               p.stage = 'completed';
+              p.completedOrder = [...p.order];
               saveProgress();
               navigate('practical');
             }

@@ -13,6 +13,7 @@ const time = z
 export const progressSchema = z
   .object({
     stage: z.enum(['reading', 'ordering', 'completed']),
+    completedOrder: z.array(id).length(8).optional(),
     answers: z.record(id, time),
     order: z.array(id).length(8),
     flipped: z.record(id, z.boolean()),
@@ -82,6 +83,11 @@ export type Classroom = z.infer<typeof classroomSchema>;
 export type Student = z.infer<typeof studentSchema>;
 export type Progress = z.infer<typeof progressSchema>;
 export function validProgress(s: Pick<Student, 'cards'>, p: Progress) {
+  if (
+    p.completedOrder &&
+    [...s.cards].sort((a, b) => a.minute - b.minute).some((c, i) => p.completedOrder![i] !== c.id)
+  )
+    return false;
   const has = (id: string) => s.cards.some((c) => c.id === id);
   if (
     new Set(p.order).size !== 8 ||

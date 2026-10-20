@@ -41,7 +41,11 @@ describe('standalone classroom live API', () => {
     expect(state.status).toBe(200);
     const a = studentActor(f, state.body.authIds.s0),
       b = studentActor(f, state.body.authIds.s1);
-    const p = { ...data.students[0].progress, answers: { s0c0: { hour: 7, minute: null } } };
+    const p = {
+      ...data.students[0].progress,
+      completedOrder: data.students[0].cards.map((c) => c.id),
+      answers: { s0c0: { hour: 7, minute: null } },
+    };
     const command = {
       epoch: setup.body.epoch,
       expectedRevision: 0,
@@ -67,6 +71,7 @@ describe('standalone classroom live API', () => {
     ).toBe(403);
     const all = await teacherRequest(f, teacher, 'get', '/api/live/progress');
     expect(all.body.students[0].progress.answers.s0c0).toEqual({ hour: 7, minute: null });
+    expect(all.body.students[0].progress.completedOrder).toEqual(p.completedOrder);
     expect(all.body.students[0].connected).toBe(true);
     expect(all.body.students[1].progress.answers).toEqual({});
     const own = await teacherRequest(f, a, 'get', '/api/live/progress');
