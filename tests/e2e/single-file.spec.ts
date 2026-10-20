@@ -32,7 +32,7 @@ test('single file opens offline and keeps title name and free mode navigation', 
   await page.getByRole('button', { name: '별이', exact: true }).click();
   for (const mode of ['연습모드', '실전모드', '공유모드']) {
     await page.getByRole('button', { name: new RegExp(mode) }).click();
-    await page.getByRole('button', { name: '홈으로 돌아가기' }).click();
+    await page.getByRole('button', { name: '홈', exact: true }).click();
     await expect(page.getByRole('heading', { name: '무엇을 해 볼까요?' })).toBeVisible();
   }
   expect(remote).toEqual([]);
@@ -49,8 +49,9 @@ test('personal reading drafts survive home reload and another student selection'
   await page.getByRole('dialog').getByRole('button', { name: '5시', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: '30분', exact: true }).click();
   await page.getByRole('button', { name: '입력 완료' }).click();
-  await page.getByRole('button', { name: '홈으로 돌아가기' }).click();
-  await page.getByRole('button', { name: '이름 다시 고르기' }).click();
+  await page.getByRole('button', { name: '홈', exact: true }).click();
+  await page.reload();
+  await page.getByRole('button', { name: '게임 시작' }).click();
   await page.getByRole('button', { name: '하늘', exact: true }).click();
   await page.getByRole('button', { name: /실전모드/ }).click();
   await expect(page.getByRole('button', { name: '하늘의 일어나기 카드 뒤집기' })).toBeVisible();
@@ -204,7 +205,21 @@ test('own cards can be read ordered and shared with serverless grading', async (
     });
     const index = await card.getAttribute('data-position');
     if (index !== String(target)) {
+      const beforeSelection = await page.locator('[data-order-id]').evaluateAll((nodes) =>
+        nodes.map((n) => {
+          const r = n.getBoundingClientRect();
+          return [r.x, r.y, r.width, r.height];
+        }),
+      );
       await card.click();
+      expect(
+        await page.locator('[data-order-id]').evaluateAll((nodes) =>
+          nodes.map((n) => {
+            const r = n.getBoundingClientRect();
+            return [r.x, r.y, r.width, r.height];
+          }),
+        ),
+      ).toEqual(beforeSelection);
       await page
         .getByRole('button', { name: target + 1 + '번째 자리에 놓기', exact: true })
         .click();
@@ -404,7 +419,7 @@ test('teacher imports multiple tablet results without overwriting another studen
   await page.getByRole('button', { name: '게임 시작' }).click();
   await page.getByRole('button', { name: '별이', exact: true }).click();
   await page.getByRole('button', { name: /공유모드/ }).click();
-  await expect(page.locator('.top button')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: '홈', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: '선생님 설정', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '선생님 설정', exact: true }).click();
   await expect(page.getByLabel('완료 기록 불러오기')).toBeAttached();
@@ -507,7 +522,7 @@ test('settings is available on each screen and returns to the unfinished answer 
     await page.getByRole('button', { name: new RegExp(mode) }).click();
     await page.getByRole('button', { name: '선생님 설정', exact: true }).click();
     await page.getByRole('button', { name: '이전 화면으로', exact: true }).click();
-    await page.getByRole('button', { name: '홈으로 돌아가기', exact: true }).click();
+    await page.getByRole('button', { name: '홈', exact: true }).click();
   }
   await page.getByRole('button', { name: /실전모드/ }).click();
   await page
@@ -524,4 +539,55 @@ test('settings is available on each screen and returns to the unfinished answer 
   await expect(
     page.getByRole('dialog').getByRole('button', { name: '00분', exact: true }),
   ).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('home and settings align and practice controls stay still through answers and feedback', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.getByRole('button', { name: '게임 시작' }).click();
+  await expect(page.getByRole('button', { name: '시작 화면으로' })).toHaveCount(0);
+  await page.getByRole('button', { name: '별이', exact: true }).click();
+  await expect(page.getByRole('button', { name: '이름 다시 고르기' })).toHaveCount(0);
+  const home = page.getByRole('button', { name: '홈', exact: true });
+  const gear = page.getByRole('button', { name: '선생님 설정', exact: true });
+  const h = (await home.boundingBox())!,
+    g = (await gear.boundingBox())!;
+  expect([h.y, h.width, h.height]).toEqual([g.y, g.width, g.height]);
+  for (const button of [home, gear]) {
+    const b = (await button.boundingBox())!,
+      icon = (await button.locator('svg').boundingBox())!;
+    expect(Math.abs(b.x + b.width / 2 - icon.x - icon.width / 2)).toBeLessThan(1);
+    expect(Math.abs(b.y + b.height / 2 - icon.y - icon.height / 2)).toBeLessThan(1);
+  }
+  await page.getByRole('button', { name: /연습모드/ }).click();
+  const q = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('sijong.single.v1')!).students[0].progress.practice,
+  );
+  const positions = () =>
+    page.locator('.clock-panel, .reward-panel, .hours, .stat').evaluateAll((nodes) =>
+      nodes.map((n) => {
+        const r = n.getBoundingClientRect();
+        return [r.x, r.y, r.width, r.height];
+      }),
+    );
+  const before = await positions();
+  await page.getByRole('button', { name: `${(q.hour % 12) + 1}시`, exact: true }).click();
+  await page.getByRole('button', { name: '00분', exact: true }).click();
+  expect(await positions()).toEqual(before);
+  await page.getByRole('button', { name: '정답 확인하기' }).click();
+  expect(await positions()).toEqual(before);
+  await page.getByRole('button', { name: `${q.hour}시`, exact: true }).click();
+  await page
+    .getByRole('button', { name: `${String(q.minute).padStart(2, '0')}분`, exact: true })
+    .click();
+  await page.getByRole('button', { name: '정답 확인하기' }).click();
+  const reward = await positions();
+  expect(reward.slice(0, 2)).toEqual(before.slice(0, 2));
+  expect(reward.at(-1)).toEqual(before.at(-1));
+  await page.screenshot({ path: '.local/classroom/aligned-practice.png' });
+  await page.getByRole('button', { name: /일과 카드 눌러 다음 문제/ }).click();
+  expect(await positions()).toEqual(before);
+  await home.click();
+  await expect(page.getByRole('heading', { name: '무엇을 해 볼까요?' })).toBeVisible();
 });

@@ -117,7 +117,7 @@
         box-shadow: 0 4px 0 #48409e;
       }
       .primary:active {
-        transform: translateY(2px);
+        transform: none;
         box-shadow: 0 2px 0 #48409e;
       }
       .secondary {
@@ -342,7 +342,7 @@
       }
       .name-tile:hover,
       .mode-tile:hover {
-        transform: translateY(-5px);
+        transform: none;
       }
       .avatar {
         width: 65px;
@@ -1900,6 +1900,86 @@
         font-size: 10px;
         line-height: 1.2;
       }
+
+      /* Stable controls and equal alignment across classroom screens. */
+      html {
+        scrollbar-gutter: stable both-edges;
+      }
+      .global-settings {
+        display: grid;
+        place-items: center;
+        padding: 0;
+        line-height: 1;
+      }
+      .global-settings svg {
+        display: block;
+        width: 24px;
+        height: 24px;
+      }
+      .global-home {
+        right: 74px;
+      }
+      .top {
+        min-height: 48px;
+        padding-right: 118px;
+      }
+      .answer-dialog .global-home {
+        right: 70px;
+      }
+      .answer-dialog h2 {
+        padding-right: 108px;
+      }
+      .notice-empty {
+        visibility: hidden;
+      }
+      .practice-page > .notice,
+      .practical-page > .notice {
+        min-height: 48px;
+        margin: 12px 0;
+      }
+      .time-readout {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        height: 54px;
+        line-height: 1;
+      }
+      .time-readout > span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 1.3em;
+      }
+      .practice-layout .reward-panel {
+        position: relative;
+        min-height: 476px;
+        padding-bottom: 68px;
+      }
+      .practice-page .reward-panel .stat {
+        position: absolute;
+        bottom: 24px;
+        left: 12px;
+        right: 12px;
+        margin: 0;
+      }
+      @media (max-width: 699px) {
+        .practice-layout .reward-panel {
+          min-height: 446px;
+        }
+      }
+      .practical-page > .notice {
+        min-height: 32px;
+        margin: 4px 0;
+        padding: 4px 14px;
+      }
+      .order-card {
+        border: 3px solid transparent;
+        padding: 6px;
+      }
+      .order-card.target {
+        border: 3px dashed #6ea3e8;
+      }
     </style>
   </head>
   <body>
@@ -2135,7 +2215,27 @@
           };
         }
         function settingsButton() {
-          return '<button class="ghost global-settings" data-action="teacher" aria-label="선생님 설정" title="선생님 설정"><span aria-hidden="true">⚙</span></button>';
+          return (
+            '<button class="ghost global-settings" data-action="teacher" aria-label="선생님 설정" title="선생님 설정">' +
+            icon('settings') +
+            '</button>'
+          );
+        }
+        function icon(kind) {
+          return (
+            '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            (kind === 'home'
+              ? '<path d="M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>'
+              : '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2"/>') +
+            '</svg>'
+          );
+        }
+        function homeButton() {
+          return student()
+            ? '<button class="ghost global-settings global-home" data-action="home" aria-label="홈" title="모드 선택 화면">' +
+                icon('home') +
+                '</button>'
+            : '';
         }
         async function liveApi(path, method = 'GET', body) {
           const response = await fetch('/api/' + path, {
@@ -2467,18 +2567,12 @@
                 '">' +
                 esc(message) +
                 '</p>'
-            : '';
+            : screen === 'practice' || screen === 'practical'
+              ? '<p class="notice notice-empty" aria-hidden="true">&nbsp;</p>'
+              : '';
         }
-        function top(home = true) {
-          return (
-            '<div class="top"><span class="chip">' +
-            esc(label(student())) +
-            '</span><div class="home-controls">' +
-            (home
-              ? '<button class="secondary" data-action="home">홈으로 돌아가기</button>'
-              : '<button class="ghost" data-action="names">이름 다시 고르기</button>') +
-            '</div></div>'
-          );
+        function top() {
+          return '<div class="top"><span class="chip">' + esc(label(student())) + '</span></div>';
         }
         function page(body) {
           return (
@@ -2723,7 +2817,7 @@
         }
         function renderNames() {
           return page(
-            '<div class="top"><span class="brand">◷ 째깍! 찰칵!</span><button class="ghost" data-action="title">시작 화면으로</button></div>' +
+            '<div class="top"><span class="brand">◷ 째깍! 찰칵!</span></div>' +
               heading(
                 'STEP 01 · SELECT YOUR NAME',
                 '내 이름을 골라요',
@@ -3047,10 +3141,7 @@
         function renderSharing() {
           const chosen = data.students.find((s) => s.id === shareStudentId);
           return page(
-            '<div class="top"><span class="brand">선생님 공유모드</span><div class="gallery-controls">' +
-              '<button class="secondary" data-action="' +
-              (student() ? 'home' : 'names') +
-              '">홈으로 돌아가기</button></div></div>' +
+            '<div class="top"><span class="brand">선생님 공유모드</span></div>' +
               heading(
                 'TEACHER SHARING',
                 '우리 반의 하루를 함께 봐요',
@@ -3237,6 +3328,12 @@
           );
         }
         function render() {
+          const scrollPosition = { x: window.scrollX, y: window.scrollY };
+          const oldDialogScroll = root.querySelector('dialog')?.scrollTop || 0;
+          const active = document.activeElement;
+          const focusKey = active?.matches('[data-action]')
+            ? ['action', 'id', 'value', 'scope'].map((k) => [k, active.dataset[k]])
+            : null;
           let html = '';
           if (screen === 'title') html = renderTitle();
           else if (screen === 'names') html = renderNames();
@@ -3288,7 +3385,7 @@
               (!validTime(p.answers[c.id]) ? 'disabled' : '') +
               '>입력 완료</button></div></dialog>';
           }
-          html += settingsButton();
+          html += homeButton() + settingsButton();
           if (live.conflict)
             html +=
               '<aside class="live-recovery" role="alert">다른 기기에 저장된 답이 있어요. <button class="secondary" data-action="live-use-server">저장된 기록 확인하기</button></aside>';
@@ -3306,9 +3403,18 @@
             dialog.addEventListener('cancel', () => {
               editingCardId = '';
             });
-            dialog.insertAdjacentHTML('afterbegin', settingsButton());
+            dialog.insertAdjacentHTML('afterbegin', homeButton() + settingsButton());
             dialog.showModal();
           }
+          if (focusKey) {
+            const area = dialog || root;
+            const nextFocus = Array.from(area.querySelectorAll('[data-action]')).find((el) =>
+              focusKey.every(([k, v]) => el.dataset[k] === v),
+            );
+            nextFocus?.focus({ preventScroll: true });
+          }
+          if (dialog) dialog.scrollTop = oldDialogScroll;
+          window.scrollTo(scrollPosition.x, scrollPosition.y);
           status();
         }
         function navigate(next) {
@@ -3324,9 +3430,6 @@
           message = text;
           messageKind = kind;
           render();
-          root
-            .querySelector('[role="alert"],[role="status"]')
-            ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
         }
         function keepScroll(fn) {
           const y = window.scrollY;
@@ -3637,6 +3740,7 @@
             return;
           }
           if (action === 'home') {
+            if (screen === 'teacher' && !confirmTeacherLeave()) return;
             navigate('menu');
             return;
           }
@@ -3820,7 +3924,7 @@
             if (!p.practice?.correct) return;
             p.practice = newQuestion();
             saveProgress();
-            navigate('practice');
+            keepScroll(() => {});
             return;
           }
           if (action === 'reading-check') {
