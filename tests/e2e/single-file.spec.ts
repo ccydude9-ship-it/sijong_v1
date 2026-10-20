@@ -510,7 +510,7 @@ test('dialog card flips while preserving the selected time', async ({ page }) =>
   await expect(flip.locator('.clock-face')).toBeVisible();
 });
 
-test('settings is available on each screen and returns to the unfinished answer dialog', async ({
+test('settings is available on screens and dialog close preserves partial answers', async ({
   page,
 }) => {
   await expect(page.getByRole('button', { name: '선생님 준비', exact: true })).toHaveCount(0);
@@ -530,8 +530,19 @@ test('settings is available on each screen and returns to the unfinished answer 
     .first()
     .click();
   await page.getByRole('dialog').getByRole('button', { name: '7시', exact: true }).click();
-  await page.getByRole('dialog').getByRole('button', { name: '선생님 설정', exact: true }).click();
-  await page.getByRole('button', { name: '이전 화면으로', exact: true }).click();
+  await expect(
+    page.getByRole('dialog').getByRole('button', { name: '선생님 설정', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('dialog').getByRole('button', { name: '홈', exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '나중에 이어하기' })).toHaveCount(0);
+  await page.getByRole('dialog').getByRole('button', { name: '닫기', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page
+    .getByRole('button', { name: /시각 고르기/ })
+    .first()
+    .click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await expect(
     page.getByRole('dialog').getByRole('button', { name: '7시', exact: true }),
@@ -565,12 +576,14 @@ test('home and settings align and practice controls stay still through answers a
     () => JSON.parse(localStorage.getItem('sijong.single.v1')!).students[0].progress.practice,
   );
   const positions = () =>
-    page.locator('.clock-panel, .reward-panel, .hours, .stat').evaluateAll((nodes) =>
-      nodes.map((n) => {
-        const r = n.getBoundingClientRect();
-        return [r.x, r.y, r.width, r.height];
-      }),
-    );
+    page
+      .locator('.clock-panel, .reward-panel, .hours, [data-action=practice-check], .stat')
+      .evaluateAll((nodes) =>
+        nodes.map((n) => {
+          const r = n.getBoundingClientRect();
+          return [r.x, r.y, r.width, r.height];
+        }),
+      );
   const before = await positions();
   await page.getByRole('button', { name: `${(q.hour % 12) + 1}시`, exact: true }).click();
   await page.getByRole('button', { name: '00분', exact: true }).click();
@@ -590,4 +603,33 @@ test('home and settings align and practice controls stay still through answers a
   expect(await positions()).toEqual(before);
   await home.click();
   await expect(page.getByRole('heading', { name: '무엇을 해 볼까요?' })).toBeVisible();
+});
+
+test('dialog number grid and submit button remain fixed from empty to complete time', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.getByRole('button', { name: '게임 시작' }).click();
+  await page.getByRole('button', { name: '별이', exact: true }).click();
+  await page.getByRole('button', { name: /실전모드/ }).click();
+  await page
+    .getByRole('button', { name: /시각 고르기/ })
+    .first()
+    .click();
+  const positions = () =>
+    page
+      .getByRole('dialog')
+      .locator('.hours, .minutes, [data-action=close-answer]')
+      .evaluateAll((nodes) =>
+        nodes.map((n) => {
+          const r = n.getBoundingClientRect();
+          return [r.x, r.y, r.width, r.height];
+        }),
+      );
+  const initial = await positions();
+  await page.getByRole('dialog').getByRole('button', { name: '7시', exact: true }).click();
+  expect(await positions()).toEqual(initial);
+  await page.getByRole('dialog').getByRole('button', { name: '30분', exact: true }).click();
+  expect(await positions()).toEqual(initial);
+  await page.screenshot({ path: '.local/classroom/aligned-dialog.png' });
 });

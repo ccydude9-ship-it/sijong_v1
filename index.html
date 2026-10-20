@@ -1980,6 +1980,14 @@
       .order-card.target {
         border: 3px dashed #6ea3e8;
       }
+      .time-input > .input-caption {
+        min-height: 20px;
+        line-height: 20px;
+        margin: 8px 0 0;
+      }
+      .answer-dialog h2 {
+        padding-right: 60px;
+      }
     </style>
   </head>
   <body>
@@ -2779,12 +2787,15 @@
               )
               .join('') +
             '</div>' +
-            (!disabled && !validTime(answer)
-              ? '<p class="input-caption" aria-live="polite">' +
-                (answer?.hour == null ? '시를 골라 주세요' : '분도 골라 주세요') +
-                '</p>'
-              : '') +
-            (wrong ? '<p class="input-caption">이 시각을 다시 읽어 볼까요?</p>' : '') +
+            '<p class="input-caption" aria-live="polite">' +
+            (wrong
+              ? '이 시각을 다시 읽어 볼까요?'
+              : !disabled && !validTime(answer)
+                ? answer?.hour == null
+                  ? '시를 골라 주세요'
+                  : '분도 골라 주세요'
+                : '') +
+            '</p>' +
             '</div>'
           );
         }
@@ -3381,7 +3392,7 @@
                 p.wrong.includes(c.id),
                 data.phase === 'ended',
               ) +
-              '</div><div class="actions"><button class="secondary" data-action="leave-answer">나중에 이어하기</button><button class="primary" data-action="close-answer" ' +
+              '</div><div class="actions"><button class="primary" data-action="close-answer" ' +
               (!validTime(p.answers[c.id]) ? 'disabled' : '') +
               '>입력 완료</button></div></dialog>';
           }
@@ -3403,7 +3414,10 @@
             dialog.addEventListener('cancel', () => {
               editingCardId = '';
             });
-            dialog.insertAdjacentHTML('afterbegin', homeButton() + settingsButton());
+            dialog.insertAdjacentHTML(
+              'afterbegin',
+              '<button class="ghost global-settings dialog-close" data-action="leave-answer" aria-label="닫기" title="닫기"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>',
+            );
             dialog.showModal();
           }
           if (focusKey) {
