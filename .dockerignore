@@ -1,0 +1,9 @@
+.git
+node_modules
+.local
+.superpowers
+.env
+.env.*
+test-results
+playwright-report
+coverage

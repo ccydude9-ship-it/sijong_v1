@@ -21,7 +21,8 @@
     "seed:demo": "node --env-file-if-exists=.env --import tsx apps/server/src/cli/seed-demo.ts",
     "teacher:password": "node --env-file-if-exists=.env --import tsx apps/server/src/cli/teacher-password.ts",
     "backup": "node --env-file-if-exists=.env --import tsx apps/server/src/cli/backup.ts",
-    "format:check": "prettier --check apps packages scripts tests *.ts *.json .github/workflows/ci.yml"
+    "format:check": "prettier --check apps packages scripts tests *.ts *.json .github/workflows/ci.yml",
+    "start:classroom": "node --env-file-if-exists=.env --import tsx scripts/classroom.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",

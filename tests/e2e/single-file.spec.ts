@@ -74,7 +74,7 @@ test('personal reading drafts survive home reload and another student selection'
 });
 
 test('teacher changes names cards and pictures within the one file app', async ({ page }) => {
-  await page.getByRole('button', { name: '선생님 준비' }).click();
+  await page.getByRole('button', { name: '선생님 설정' }).click();
   await page.getByLabel('학생 이름').fill('지민');
   await page.getByLabel('일과 이름').first().fill('지민의 아침');
   await page
@@ -95,7 +95,7 @@ test('teacher changes names cards and pictures within the one file app', async (
     });
   await expect(page.getByText('그림을 바꿨어요. 이 학생 저장을 눌러 주세요.')).toBeVisible();
   await page.getByRole('button', { name: '이 학생 저장' }).click();
-  await page.getByRole('button', { name: '시작 화면으로' }).click();
+  await page.getByRole('button', { name: '이전 화면으로' }).click();
   await page.getByRole('button', { name: '게임 시작' }).click();
   await page.getByRole('button', { name: '지민', exact: true }).click();
   await page.getByRole('button', { name: /실전모드/ }).click();
@@ -136,7 +136,7 @@ test('import rejects malformed progress instead of rendering injected content', 
   const bad = await page.evaluate(() => JSON.parse(localStorage.getItem('sijong.single.v1')!));
   bad.students[0].progress.solved = '<img src=x onerror="window.injected=true">';
   await page.reload();
-  await page.getByRole('button', { name: '선생님 준비' }).click();
+  await page.getByRole('button', { name: '선생님 설정' }).click();
   page.on('dialog', (dialog) => dialog.accept());
   await page.getByLabel('자료 불러오기', { exact: true }).setInputFiles({
     name: 'bad.json',
@@ -232,13 +232,13 @@ test('own cards can be read ordered and shared with serverless grading', async (
     .last()
     .evaluate((el) => el.getBoundingClientRect().bottom);
   expect(sharedBottom).toBeLessThan(768);
-  await expect(page.getByRole('button', { name: '하늘 일과표 보기', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: '하늘 일과표 보기', exact: true })).toBeEnabled();
 });
 
 test('student photo is editable persistent and displayed as a round name avatar', async ({
   page,
 }) => {
-  await page.getByRole('button', { name: '선생님 준비' }).click();
+  await page.getByRole('button', { name: '선생님 설정' }).click();
   await page.getByLabel('학생 사진').setInputFiles({
     name: 'face.png',
     mimeType: 'image/png',
@@ -404,7 +404,8 @@ test('teacher imports multiple tablet results without overwriting another studen
   await page.getByRole('button', { name: '게임 시작' }).click();
   await page.getByRole('button', { name: '별이', exact: true }).click();
   await page.getByRole('button', { name: /공유모드/ }).click();
-  await expect(page.locator('.top button')).toHaveCount(2);
+  await expect(page.locator('.top button')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: '선생님 설정', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '선생님 설정', exact: true }).click();
   await expect(page.getByLabel('완료 기록 불러오기')).toBeAttached();
   page.on('dialog', (dialog) => dialog.accept());
@@ -492,4 +493,35 @@ test('dialog card flips while preserving the selected time', async ({ page }) =>
   );
   await flip.click();
   await expect(flip.locator('.clock-face')).toBeVisible();
+});
+
+test('settings is available on each screen and returns to the unfinished answer dialog', async ({
+  page,
+}) => {
+  await expect(page.getByRole('button', { name: '선생님 준비', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '선생님 설정', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '게임 시작' }).click();
+  await expect(page.getByRole('button', { name: '선생님 설정', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '별이', exact: true }).click();
+  for (const mode of ['연습모드', '공유모드']) {
+    await page.getByRole('button', { name: new RegExp(mode) }).click();
+    await page.getByRole('button', { name: '선생님 설정', exact: true }).click();
+    await page.getByRole('button', { name: '이전 화면으로', exact: true }).click();
+    await page.getByRole('button', { name: '홈으로 돌아가기', exact: true }).click();
+  }
+  await page.getByRole('button', { name: /실전모드/ }).click();
+  await page
+    .getByRole('button', { name: /시각 고르기/ })
+    .first()
+    .click();
+  await page.getByRole('dialog').getByRole('button', { name: '7시', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: '선생님 설정', exact: true }).click();
+  await page.getByRole('button', { name: '이전 화면으로', exact: true }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(
+    page.getByRole('dialog').getByRole('button', { name: '7시', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(
+    page.getByRole('dialog').getByRole('button', { name: '00분', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'false');
 });

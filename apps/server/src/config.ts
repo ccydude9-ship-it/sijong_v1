@@ -1,5 +1,6 @@
 import { resolve, join } from 'node:path';
 export type Config = {
+  standalone?: boolean;
   port: number;
   host: string;
   publicOrigin: string;

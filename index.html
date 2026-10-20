@@ -1763,6 +1763,143 @@
         min-height: 48px;
         padding: 6px;
       }
+
+      .global-settings {
+        position: fixed;
+        top: 14px;
+        right: 16px;
+        z-index: 30;
+        width: 48px;
+        height: 48px;
+        min-height: 48px;
+        padding: 4px;
+        border-radius: 14px;
+        background: #fff;
+        color: #48475f;
+        border: 1px solid #dfdce8;
+        font-size: 30px;
+      }
+      .top {
+        padding-right: 60px;
+      }
+      .answer-dialog .global-settings {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+      }
+      .answer-dialog h2 {
+        padding-right: 50px;
+      }
+      .live-settings {
+        margin: 16px 0;
+        padding: 20px;
+      }
+      .class-code {
+        font-size: 30px;
+        letter-spacing: 6px;
+        color: var(--purple);
+      }
+      .connection-form {
+        max-width: 520px;
+        margin: 60px auto;
+        padding: 30px;
+      }
+      .connection-form form {
+        display: grid;
+        gap: 24px;
+      }
+      .connection-form input {
+        display: block;
+        width: 100%;
+        margin-top: 12px;
+        min-height: 52px;
+        font-size: 24px;
+      }
+      .live-recovery {
+        position: fixed;
+        bottom: 10px;
+        left: 5%;
+        right: 5%;
+        z-index: 40;
+        padding: 16px;
+        background: #fff1cf;
+        border: 2px solid #b88d32;
+        border-radius: 15px;
+        text-align: center;
+      }
+      .avatar .preset-portrait {
+        width: 100%;
+        height: 100%;
+        display: block;
+        background: white;
+      }
+      .teacher-share-page:not(.has-selected) .teacher-gallery {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+      .teacher-share-page:not(.has-selected) .gallery-student {
+        min-height: 185px;
+        padding: 16px;
+        gap: 8px;
+      }
+      .teacher-share-page:not(.has-selected) .gallery-student .avatar {
+        width: 76px;
+        height: 76px;
+        font-size: 36px;
+      }
+      .teacher-share-page:not(.has-selected) .gallery-student strong {
+        font-size: 23px;
+      }
+      .teacher-share-page:not(.has-selected) .gallery-student small {
+        font-size: 16px;
+      }
+      .presence {
+        display: block;
+        margin-top: 4px;
+        font-size: 12px;
+        color: #597564;
+      }
+      .has-selected > .center {
+        margin: 6px 0;
+      }
+      @media (max-width: 699px) {
+        .teacher-share-page:not(.has-selected) .teacher-gallery {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .teacher-share-page:not(.has-selected) .gallery-student small {
+          font-size: 13px;
+        }
+      }
+      @media print {
+        .global-settings,
+        .live-recovery {
+          display: none;
+        }
+      }
+
+      @media (min-width: 700px) {
+        .teacher-share-page.has-selected .heading p {
+          display: none;
+        }
+        .teacher-share-page.has-selected .timeline-card > .paper-card {
+          height: clamp(112px, calc((100vh - 520px) / 2), 260px);
+        }
+        .teacher-share-page.has-selected .gallery-student small {
+          font-size: 10px;
+        }
+      }
+
+      .timeline-card .paper-card {
+        padding: 8px 6px;
+        gap: 4px;
+      }
+      .timeline-card .card-name,
+      .timeline-card .card-caption,
+      .order-card .card-name,
+      .order-card .card-caption {
+        font-size: 10px;
+        line-height: 1.2;
+      }
     </style>
   </head>
   <body>
@@ -1855,6 +1992,9 @@
           const safeId = (id) => typeof id === 'string' && /^[a-zA-Z0-9_-]{1,80}$/.test(id);
           return (
             data?.version === 1 &&
+            (data.portraitSheet === undefined ||
+              (typeof data.portraitSheet === 'string' &&
+                /^data:image\/(png|jpeg|webp);base64,/.test(data.portraitSheet))) &&
             ['active', 'ended'].includes(data.phase) &&
             Array.isArray(data.students) &&
             data.students.length === 6 &&
@@ -1868,7 +2008,9 @@
                 s.name.length > 30 ||
                 (s.photo !== undefined &&
                   (typeof s.photo !== 'string' ||
-                    (s.photo !== '' && !/^data:image\/(png|jpeg|webp);base64,/i.test(s.photo)))) ||
+                    (s.photo !== '' &&
+                      !/^preset:[0-5]$/.test(s.photo) &&
+                      !/^data:image\/(png|jpeg|webp);base64,/i.test(s.photo)))) ||
                 typeof s.distinction !== 'string' ||
                 s.distinction.length > 20 ||
                 !Array.isArray(s.cards) ||
@@ -1967,6 +2109,330 @@
           teacherDraft = null,
           teacherDirty = false,
           uploading = false;
+        const live = {
+          enabled: !!document.querySelector('meta[name="classroom-live"]'),
+          session: null,
+          epoch: '',
+          code: '',
+          authIds: {},
+          revisions: {},
+          meta: {},
+          lastSeen: 0,
+          pending: null,
+          sending: false,
+          polling: false,
+          conflict: false,
+          problem: '',
+          loginTarget: 'teacher',
+          needsAuth: false,
+        };
+        let settingsReturn = null;
+        const LIVE_OUTBOX = 'sijong.live.outbox.v1';
+        function portableData() {
+          return {
+            ...data,
+            ...(typeof PORTRAIT_SHEET !== 'undefined' ? { portraitSheet: PORTRAIT_SHEET } : {}),
+          };
+        }
+        function settingsButton() {
+          return '<button class="ghost global-settings" data-action="teacher" aria-label="선생님 설정" title="선생님 설정"><span aria-hidden="true">⚙</span></button>';
+        }
+        async function liveApi(path, method = 'GET', body) {
+          const response = await fetch('/api/' + path, {
+            method,
+            credentials: 'same-origin',
+            cache: 'no-store',
+            headers: {
+              ...(body ? { 'Content-Type': 'application/json' } : {}),
+              ...(live.session?.csrfToken ? { 'X-CSRF-Token': live.session.csrfToken } : {}),
+            },
+            ...(body ? { body: JSON.stringify(body) } : {}),
+            signal: AbortSignal.timeout(10000),
+          });
+          const result = await response.json();
+          if (!response.ok)
+            throw Object.assign(new Error(result.message || '연결을 확인해 주세요'), {
+              status: response.status,
+              details: result.details,
+            });
+          return result;
+        }
+        function liveText() {
+          if (!live.enabled) return '이 기기에 저장된 기록';
+          if (!live.session) return '교실에 연결하면 진행 상황을 함께 볼 수 있어요';
+          if (live.conflict)
+            return '다른 기기의 기록과 겹쳤어요. 설정에서 저장된 기록을 확인해 주세요.';
+          if (live.needsAuth)
+            return '교실에 다시 연결해 주세요. 보내지 못한 입력은 이 기기에 남아 있어요.';
+          if (live.problem)
+            return (
+              '연결을 다시 시도하고 있어요 · 마지막 확인 ' +
+              (live.lastSeen ? new Date(live.lastSeen).toLocaleTimeString('ko-KR') : '전')
+            );
+          if (live.pending) return '입력을 보내는 중 · 연결이 돌아오면 자동으로 다시 보내요';
+          if (!live.epoch) return '선생님이 수업 자료를 열어 주세요';
+          return (
+            '교실 연결됨 · ' +
+            (live.lastSeen
+              ? new Date(live.lastSeen).toLocaleTimeString('ko-KR') + ' 확인'
+              : '준비 중')
+          );
+        }
+        function rememberOutbox() {
+          try {
+            if (live.pending) localStorage.setItem(LIVE_OUTBOX, JSON.stringify(live.pending));
+            else localStorage.removeItem(LIVE_OUTBOX);
+          } catch {
+            storageError = '자동 저장 공간이 부족해요. 입력을 보낼 때까지 이 화면을 열어 두세요.';
+          }
+        }
+        function queueLiveProgress() {
+          if (!live.enabled || live.session?.role !== 'student' || !student() || live.needsAuth)
+            return;
+          if (!live.pending)
+            live.pending = {
+              epoch: live.epoch,
+              studentId,
+              latest: JSON.parse(JSON.stringify(student().progress)),
+              request: null,
+            };
+          else live.pending.latest = JSON.parse(JSON.stringify(student().progress));
+          rememberOutbox();
+          void flushLiveProgress();
+        }
+        async function flushLiveProgress() {
+          if (
+            !live.pending ||
+            live.sending ||
+            live.conflict ||
+            live.needsAuth ||
+            live.session?.role !== 'student'
+          )
+            return;
+          live.sending = true;
+          try {
+            const pending = live.pending;
+            pending.request ||= {
+              epoch: pending.epoch,
+              expectedRevision: live.revisions[pending.studentId] || 0,
+              operationId: crypto.randomUUID(),
+              progress: JSON.parse(JSON.stringify(pending.latest)),
+              screen,
+            };
+            rememberOutbox();
+            const result = await liveApi('live/progress', 'PUT', pending.request);
+            live.revisions[pending.studentId] = result.revision;
+            if (JSON.stringify(pending.latest) === JSON.stringify(pending.request.progress))
+              live.pending = null;
+            else pending.request = null;
+            live.problem = '';
+            live.lastSeen = Date.now();
+            rememberOutbox();
+          } catch (err) {
+            live.problem = err.message;
+            if (err.status === 409) live.conflict = true;
+            if (err.status === 401) live.needsAuth = true;
+          } finally {
+            live.sending = false;
+            status();
+          }
+          if (live.pending && !live.problem) void flushLiveProgress();
+        }
+        async function loadLiveState() {
+          const snapshot = await liveApi('live/state');
+          if (!valid(snapshot.data)) throw Error('수업 자료를 읽지 못했어요');
+          // Keep a local recovery copy before changing classrooms.
+          if (!live.epoch) {
+            try {
+              localStorage.setItem('sijong.before-online.v1', JSON.stringify(portableData()));
+            } catch {}
+          }
+          data = snapshot.data;
+          live.epoch = snapshot.epoch;
+          live.code = snapshot.code || '';
+          live.authIds = snapshot.authIds;
+          live.revisions = {};
+          live.meta = {};
+          for (const s of snapshot.students) {
+            live.revisions[s.id] = s.revision;
+            live.meta[s.id] = s;
+          }
+          studentId = snapshot.studentId || studentId;
+          if (live.session.role === 'student') {
+            try {
+              const pending = JSON.parse(localStorage.getItem(LIVE_OUTBOX) || 'null');
+              if (
+                pending?.epoch === live.epoch &&
+                pending.studentId === studentId &&
+                pending.latest
+              ) {
+                const candidate = JSON.parse(JSON.stringify(data));
+                candidate.students.find((s) => s.id === studentId).progress = pending.latest;
+                if (valid(candidate)) {
+                  data = candidate;
+                  live.pending = pending;
+                }
+              }
+            } catch {}
+          }
+          live.lastSeen = Date.now();
+          live.problem = '';
+          live.needsAuth = false;
+          persist();
+          if (live.session.role === 'teacher')
+            setTeacher(
+              data.students.some((s) => s.id === teacherId) ? teacherId : data.students[0].id,
+            );
+          void flushLiveProgress();
+        }
+        async function pollLive() {
+          if (
+            !live.enabled ||
+            !live.session ||
+            !live.epoch ||
+            live.polling ||
+            live.needsAuth ||
+            !['teacher', 'student'].includes(live.session.role)
+          )
+            return;
+          live.polling = true;
+          try {
+            const snap = await liveApi('live/progress?screen=' + encodeURIComponent(screen));
+            if (snap.epoch !== live.epoch) {
+              live.needsAuth = true;
+              throw Error('수업 자료가 바뀌었어요');
+            }
+            let changed = data.phase !== snap.phase;
+            data.phase = snap.phase;
+            for (const incoming of snap.students) {
+              live.meta[incoming.id] = incoming;
+              if (live.session.role === 'student' && (live.pending || live.sending)) continue;
+              const s = data.students.find((s) => s.id === incoming.id);
+              if (s && JSON.stringify(s.progress) !== JSON.stringify(incoming.progress)) {
+                s.progress = incoming.progress;
+                changed = true;
+              }
+              live.revisions[incoming.id] = incoming.revision;
+            }
+            live.problem = '';
+            live.lastSeen = Date.now();
+            persist();
+            if (
+              screen === 'teacher-share' ||
+              (changed &&
+                live.session.role === 'student' &&
+                screen !== 'teacher' &&
+                screen !== 'live-login')
+            ) {
+              const y = scrollY;
+              render();
+              window.scrollTo(0, y);
+            }
+          } catch (err) {
+            live.problem = err.message;
+            if (err.status === 401) live.needsAuth = true;
+          } finally {
+            live.polling = false;
+            status();
+          }
+          void flushLiveProgress();
+        }
+        function connectionPanel() {
+          if (!live.enabled)
+            return '<section class="panel live-settings"><h2>실시간 교실</h2><p>온라인 수업 주소에서 열면 태블릿의 진행 상황을 함께 볼 수 있어요.</p></section>';
+          return (
+            '<section class="panel live-settings"><h2>실시간 교실</h2><p id="connection-note">' +
+            esc(liveText()) +
+            '</p>' +
+            (live.code
+              ? '<p>학생용 교실 코드 <strong class="class-code">' + esc(live.code) + '</strong></p>'
+              : '') +
+            '<p>태블릿에서도 같은 웹주소를 열고 교실 코드를 입력해 주세요.</p><div class="actions"><button class="primary" data-action="live-publish">' +
+            (live.epoch ? '수정한 자료로 수업 다시 열기' : '이 자료로 수업 열기') +
+            '</button><button class="secondary" data-action="live-logout">연결 해제</button></div><p class="subtle">자료를 수정했다면 수업을 다시 열어 적용해 주세요. 학생들은 새 코드로 다시 연결합니다.</p></section>'
+          );
+        }
+        function renderLiveLogin() {
+          const teacher = live.loginTarget !== 'student';
+          return page(
+            '<div class="top"><span class="brand">교실 연결</span><button class="secondary" data-action="live-login-back">이전 화면으로</button></div><section class="panel connection-form"><h1>' +
+              (teacher ? '선생님 접속' : '우리 교실에 들어가요') +
+              '</h1><p>' +
+              (teacher
+                ? '선생님 비밀번호로 설정과 공유화면을 열어요.'
+                : '선생님이 알려 준 여섯 자리 교실 코드를 입력해요.') +
+              '</p>' +
+              notice() +
+              '<form id="live-login-form"><label>' +
+              (teacher ? '선생님 비밀번호' : '교실 코드') +
+              '<input name="credential" aria-label="' +
+              (teacher ? '선생님 비밀번호' : '교실 코드') +
+              '" type="' +
+              (teacher ? 'password' : 'text') +
+              '" ' +
+              (teacher
+                ? 'autocomplete="current-password"'
+                : 'inputmode="numeric" maxlength="6" autocomplete="off"') +
+              ' required></label><button class="primary" type="submit">' +
+              (teacher ? '선생님 접속하기' : '교실 연결하기') +
+              '</button></form></section>',
+          );
+        }
+        function liveStage(s) {
+          const n = Object.values(s.progress.answers).filter(validTime).length;
+          if (live.meta[s.id]?.screen === 'practice') return '활동 1 · 시계 연습 중';
+          if (s.progress.stage === 'completed') return '내 하루 완성';
+          if (s.progress.stage === 'ordering') return '활동 2-2 · 순서 맞추는 중';
+          return '활동 2-1 · 시각 입력 ' + n + '/8';
+        }
+        async function openSettings() {
+          if (screen === 'teacher' || (screen === 'live-login' && live.loginTarget !== 'student'))
+            return;
+          settingsReturn = {
+            screen,
+            studentId,
+            editingCardId,
+            dialogFlipped,
+            shareStudentId,
+            loginTarget: live.loginTarget,
+          };
+          if (live.enabled && (live.session?.role !== 'teacher' || live.needsAuth)) {
+            live.loginTarget = 'teacher';
+            navigate('live-login');
+            return;
+          }
+          setTeacher(teacherId);
+          navigate('teacher');
+        }
+        function leaveSettings() {
+          const previous = settingsReturn;
+          settingsReturn = null;
+          if (!previous) {
+            navigate('title');
+            return;
+          }
+          live.loginTarget = previous.loginTarget || live.loginTarget;
+          studentId = previous.studentId;
+          shareStudentId = previous.shareStudentId;
+          navigate(previous.screen);
+          editingCardId = previous.editingCardId;
+          dialogFlipped = previous.dialogFlipped;
+          render();
+        }
+        async function bootLive() {
+          if (!live.enabled) return;
+          try {
+            live.session = await liveApi('session');
+            await loadLiveState();
+            if (live.session.role === 'student') navigate('menu');
+            else if (live.session.role === 'classroom') navigate('names');
+          } catch (err) {
+            if (err.status !== 401 && err.status !== 404) live.problem = err.message;
+          }
+          status();
+          setInterval(() => void pollLive(), 2000);
+        }
+
         const student = () => data.students.find((s) => s.id === studentId);
         const label = (s) => s.name + (s.distinction ? ' ' + s.distinction : '');
         function persist() {
@@ -1983,8 +2449,14 @@
         function status() {
           storageNote.textContent =
             storageError ||
+            (live.enabled ? liveText() : '') ||
             (screen === 'title' ? '' : '이 브라우저에 자동 저장 · 다른 기기와는 연결되지 않아요');
-          storageNote.style.display = screen === 'title' && !storageError ? 'none' : 'block';
+          storageNote.style.display =
+            screen === 'title' && !storageError && !live.enabled ? 'none' : 'block';
+          const liveStatus = document.getElementById('live-status');
+          if (liveStatus) liveStatus.textContent = liveText();
+          const connection = document.getElementById('connection-note');
+          if (connection) connection.textContent = liveText();
         }
         function notice() {
           return message
@@ -2016,7 +2488,7 @@
               : screen === 'practice'
                 ? 'practice-page'
                 : screen === 'teacher-share'
-                  ? 'teacher-share-page'
+                  ? 'teacher-share-page' + (shareStudentId ? ' has-selected' : '')
                   : '') +
             '">' +
             body +
@@ -2223,12 +2695,29 @@
           );
         }
         function renderTitle() {
-          return '<main class="title-page"><div class="arcade-label">TICK TOCK · MY LITTLE DAY</div><button class="title-start" data-action="start" aria-label="게임 시작"><div class="mascot-clock" aria-hidden="true"></div><h1><span>시계는 째깍!</span> <span>하루는 찰칵!</span></h1><div class="press">PRESS ANY BUTTON</div><div class="title-caption">게임을 시작하려면 아무 버튼이나 누르세요</div></button><div class="title-footer"><span class="subtle" style="color:#b3afd0">나만의 하루를 만드는 시간 여행</span><button class="ghost" data-action="teacher">선생님 준비</button></div></main>';
+          return '<main class="title-page"><div class="arcade-label">TICK TOCK · MY LITTLE DAY</div><button class="title-start" data-action="start" aria-label="게임 시작"><div class="mascot-clock" aria-hidden="true"></div><h1><span>시계는 째깍!</span> <span>하루는 찰칵!</span></h1><div class="press">PRESS ANY BUTTON</div><div class="title-caption">게임을 시작하려면 아무 버튼이나 누르세요</div></button><div class="title-footer"><span class="subtle" style="color:#b3afd0">나만의 하루를 만드는 시간 여행</span></div></main>';
+        }
+        function presetAvatar(cell) {
+          const x = (cell % 2) * 512,
+            y = Math.floor(cell / 2) * 512 + 24;
+          return (
+            '<svg class="preset-portrait" viewBox="0 0 512 512" aria-hidden="true"><svg x="46" y="30" width="420" height="420" viewBox="' +
+            x +
+            ' ' +
+            y +
+            ' 512 480" overflow="hidden"><image width="1024" height="1536" href="' +
+            esc(data.portraitSheet || '') +
+            '"/></svg></svg>'
+          );
         }
         function avatar(s, i) {
           return (
             '<span class="avatar" aria-hidden="true">' +
-            (s.photo ? '<img src="' + esc(s.photo) + '" alt="">' : badges[i]) +
+            (/^preset:[0-5]$/.test(s.photo || '') && data.portraitSheet
+              ? presetAvatar(Number(s.photo.slice(-1)))
+              : s.photo && !s.photo.startsWith('preset:')
+                ? '<img src="' + esc(s.photo) + '" alt="">'
+                : badges[i]) +
             '</span>'
           );
         }
@@ -2531,12 +3020,19 @@
         function timeline(s) {
           return (
             '<div class="timeline">' +
-            s.progress.order
+            (s.progress.stage === 'reading' ? s.cards.map((c) => c.id) : s.progress.order)
               .map((id) => {
                 const c = s.cards.find((c) => c.id === id);
                 return (
                   '<article class="timeline-card"><span class="timeline-time">' +
-                  timeText(c.minute) +
+                  (s.progress.stage === 'reading'
+                    ? (s.progress.answers[c.id]?.hour ?? blankTime) +
+                      '시 ' +
+                      (s.progress.answers[c.id]?.minute == null
+                        ? blankTime
+                        : String(s.progress.answers[c.id].minute).padStart(2, '0')) +
+                      '분'
+                    : timeText(c.minute)) +
                   '</span>' +
                   frontCard(s, c) +
                   '<h2>' +
@@ -2549,20 +3045,20 @@
           );
         }
         function renderSharing() {
-          const chosen = data.students.find(
-            (s) => s.id === shareStudentId && s.progress.stage === 'completed',
-          );
+          const chosen = data.students.find((s) => s.id === shareStudentId);
           return page(
             '<div class="top"><span class="brand">선생님 공유모드</span><div class="gallery-controls">' +
               '<button class="secondary" data-action="' +
               (student() ? 'home' : 'names') +
-              '">홈으로 돌아가기</button><button class="ghost settings-icon" data-action="teacher-back" aria-label="선생님 설정" title="선생님 설정"><span aria-hidden="true">⚙</span></button></div></div>' +
+              '">홈으로 돌아가기</button></div></div>' +
               heading(
                 'TEACHER SHARING',
                 '우리 반의 하루를 함께 봐요',
-                '완성한 학생의 이름을 누르면 그 학생이 배치한 일과표가 나와요.',
+                '학생 이름을 누르면 지금 입력한 시각과 카드 배열을 볼 수 있어요.',
               ) +
-              '<p class="teacher-warning">이 기기에서 완성한 기록은 바로 보여요. 다른 태블릿의 기록은 학생의 완료 화면에서 내보내고, 오른쪽 위 설정에서 여러 파일을 함께 불러와 주세요.</p>' +
+              '<p class="teacher-warning" id="live-status">' +
+              esc(liveText()) +
+              '</p>' +
               notice() +
               '<div class="teacher-gallery" aria-label="공유할 학생">' +
               data.students
@@ -2575,13 +3071,18 @@
                     '" aria-label="' +
                     esc(label(s)) +
                     ' 일과표 보기" ' +
-                    (s.progress.stage !== 'completed' ? 'disabled' : '') +
+                    '' +
                     '>' +
                     avatar(s, i) +
                     '<strong>' +
                     esc(label(s)) +
                     '</strong><small>' +
-                    (s.progress.stage === 'completed' ? '일과표 보기' : '아직 완성 전') +
+                    esc(liveStage(s)) +
+                    (live.enabled
+                      ? '<span class="presence">' +
+                        (live.meta[s.id]?.connected ? '활동 중' : '연결 대기') +
+                        '</span>'
+                      : '') +
                     '</small></button>',
                 )
                 .join('') +
@@ -2590,9 +3091,12 @@
                 ? '<h2 class="center">' +
                   esc(label(chosen)) +
                   '의 하루</h2>' +
+                  '<p class="center">' +
+                  esc(liveStage(chosen)) +
+                  '</p>' +
                   timeline(chosen) +
                   '<div class="actions"><button class="secondary" data-action="print">일과표 인쇄하기</button></div>'
-                : '<section class="panel center"><h2>완성한 학생의 이름을 골라 주세요</h2><p>아직 기록이 없다면 실전모드를 완성하거나 완료 기록을 불러와 주세요.</p></section>'),
+                : '<p class="center subtle">학생 이름을 눌러 활동 중인 모습도 함께 봐요.</p>'),
           );
         }
         function setTeacher(id) {
@@ -2617,7 +3121,9 @@
         function renderTeacher() {
           const t = teacherDraft;
           return page(
-            '<div class="top"><span class="brand">◷ 선생님 준비</span><button class="secondary" data-action="teacher-exit">시작 화면으로</button></div><div class="teacher-toolbar"><div><span class="eyebrow">TEACHER\'S ROOM</span><h1>우리 반의 하루</h1></div><div class="actions" style="margin:0"><button class="primary" data-action="teacher-gallery">공유모드 열기</button><label class="secondary result-import">완료 기록 불러오기<input type="file" id="result-import" aria-label="완료 기록 불러오기" multiple accept=".json,application/json" hidden></label><button class="secondary" data-action="phase">' +
+            '<div class="top"><span class="brand">◷ 선생님 준비</span><button class="secondary" data-action="teacher-exit">이전 화면으로</button></div>' +
+              connectionPanel() +
+              '<div class="teacher-toolbar"><div><span class="eyebrow">TEACHER\'S ROOM</span><h1>우리 반의 하루</h1></div><div class="actions" style="margin:0"><button class="primary" data-action="teacher-gallery">공유모드 열기</button><label class="secondary result-import">완료 기록 불러오기<input type="file" id="result-import" aria-label="완료 기록 불러오기" multiple accept=".json,application/json" hidden></label><button class="secondary" data-action="phase">' +
               (data.phase === 'active' ? '수업 마치기' : '수업 다시 시작') +
               '</button><button class="secondary" data-action="export">자료 내보내기</button><label class="secondary" style="cursor:pointer;display:inline-flex;align-items:center">자료 불러오기<input type="file" id="import-file" accept=".json,application/json" aria-label="자료 불러오기" style="display:none"></label></div></div><p class="teacher-warning">이 파일 하나로 바로 수업할 수 있어요. 이름과 그림, 진행 내용은 현재 브라우저에 저장됩니다. 다른 기기에서 쓰려면 자료를 내보낸 뒤 그 기기에서 불러와 주세요. 여러 기기의 진행 상황은 자동으로 합쳐지지 않아요.</p>' +
               notice() +
@@ -2638,7 +3144,7 @@
                     '</small><button class="secondary" data-action="teacher-share" data-id="' +
                     esc(s.id) +
                     '" ' +
-                    (s.progress.stage !== 'completed' ? 'disabled' : '') +
+                    '' +
                     '>일과표 보기</button></div>',
                 )
                 .join('') +
@@ -2734,6 +3240,7 @@
           let html = '';
           if (screen === 'title') html = renderTitle();
           else if (screen === 'names') html = renderNames();
+          else if (screen === 'live-login') html = renderLiveLogin();
           else if (screen === 'teacher') html = renderTeacher();
           else if (screen === 'teacher-share') html = renderSharing();
           else if (student()) {
@@ -2781,6 +3288,13 @@
               (!validTime(p.answers[c.id]) ? 'disabled' : '') +
               '>입력 완료</button></div></dialog>';
           }
+          html += settingsButton();
+          if (live.conflict)
+            html +=
+              '<aside class="live-recovery" role="alert">다른 기기에 저장된 답이 있어요. <button class="secondary" data-action="live-use-server">저장된 기록 확인하기</button></aside>';
+          else if (live.needsAuth)
+            html +=
+              '<aside class="live-recovery" role="alert">교실 연결이 끝났어요. <button class="secondary" data-action="live-reconnect">다시 연결하기</button></aside>';
           root.innerHTML = html;
           if (uploading && screen === 'teacher') {
             root.querySelectorAll('button, input, select').forEach((control) => {
@@ -2792,6 +3306,7 @@
             dialog.addEventListener('cancel', () => {
               editingCardId = '';
             });
+            dialog.insertAdjacentHTML('afterbegin', settingsButton());
             dialog.showModal();
           }
           status();
@@ -2821,10 +3336,11 @@
         }
         function saveProgress() {
           persist();
+          queueLiveProgress();
           status();
         }
         function editAllowed() {
-          return data.phase === 'active';
+          return data.phase === 'active' && !live.needsAuth && !live.conflict;
         }
         function confirmTeacherLeave() {
           if (uploading) {
@@ -2889,7 +3405,7 @@
           setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
         function exportData() {
-          downloadJson(data, '째깍찰칵-수업자료.json');
+          downloadJson(portableData(), '째깍찰칵-수업자료.json');
         }
         function exportResult() {
           const s = student();
@@ -2940,10 +3456,159 @@
             feedback(err.message || '완료 기록을 읽지 못했어요.');
           }
         }
-        root.addEventListener('click', (e) => {
+        async function handleLiveAction(action, id, button) {
+          if (action === 'teacher' || action === 'teacher-back') {
+            await openSettings();
+            return true;
+          }
+          if (action === 'teacher-exit') {
+            if (confirmTeacherLeave()) leaveSettings();
+            return true;
+          }
+          if (action === 'live-login-back') {
+            leaveSettings();
+            return true;
+          }
+          if (action === 'live-reconnect') {
+            live.loginTarget = 'student';
+            navigate('live-login');
+            return true;
+          }
+          if (action === 'live-use-server') {
+            if (
+              !window.confirm(
+                '이 기기의 입력은 복구용으로 보관하고, 서버에 저장된 답을 불러올까요?',
+              )
+            )
+              return true;
+            try {
+              localStorage.setItem('sijong.conflict-backup.v1', JSON.stringify(live.pending));
+            } catch {}
+            live.pending = null;
+            live.conflict = false;
+            rememberOutbox();
+            await loadLiveState();
+            navigate('menu');
+            return true;
+          }
+          if (action === 'start' && live.enabled && (!live.session || live.needsAuth)) {
+            live.loginTarget = 'student';
+            navigate('live-login');
+            return true;
+          }
+          if (action === 'live-publish') {
+            if (teacherDirty) throw Error('먼저 이 학생 저장을 눌러 주세요');
+            if (
+              live.epoch &&
+              !window.confirm(
+                '수정한 자료로 수업을 다시 열까요? 현재 학생 연결은 해제되며 새 교실 코드로 다시 연결해야 합니다.',
+              )
+            )
+              return true;
+            const result = await liveApi('live/setup', 'POST', {
+              data: { ...portableData(), phase: 'active' },
+              replace: !!live.epoch,
+            });
+            live.code = result.code;
+            await loadLiveState();
+            feedback('수업을 열었어요. 학생들에게 교실 코드를 알려 주세요.', 'success');
+            return true;
+          }
+          if (action === 'live-logout') {
+            if (!confirmTeacherLeave()) return true;
+            await liveApi('auth/logout', 'POST', {});
+            live.session = null;
+            live.epoch = '';
+            live.code = '';
+            live.meta = {};
+            navigate('title');
+            return true;
+          }
+          if (!live.enabled || !live.session) return false;
+          if (action === 'select' && live.session.role === 'classroom') {
+            live.session = await liveApi('auth/student', 'POST', { studentId: live.authIds[id] });
+            await loadLiveState();
+            navigate('menu');
+            return true;
+          }
+          if (action === 'names' && live.session.role === 'student') {
+            await flushLiveProgress();
+            if (live.pending)
+              throw Error('보내지 못한 입력이 있어요. 연결이 돌아온 뒤 이름을 바꿔 주세요.');
+            live.session = await liveApi('auth/student/reset', 'POST', {});
+            studentId = '';
+            await loadLiveState();
+            navigate('names');
+            return true;
+          }
+          if (
+            (action === 'mode' && button.dataset.mode === 'teacher-share') ||
+            action === 'teacher-gallery'
+          ) {
+            if (live.session.role !== 'teacher') {
+              settingsReturn = {
+                screen,
+                studentId,
+                editingCardId: '',
+                dialogFlipped: false,
+                shareStudentId,
+              };
+              live.loginTarget = 'teacher-share';
+              navigate('live-login');
+              return true;
+            }
+          }
+          if (action === 'phase' && live.session.role === 'teacher') {
+            if (teacherDirty) throw Error('먼저 변경한 자료를 저장해 주세요');
+            const next = data.phase === 'active' ? 'ended' : 'active';
+            if (!window.confirm(next === 'ended' ? '수업을 마칠까요?' : '수업을 다시 시작할까요?'))
+              return true;
+            const result = await liveApi('live/phase', 'POST', { phase: next });
+            data.phase = result.phase;
+            persist();
+            render();
+            return true;
+          }
+          return false;
+        }
+        root.addEventListener('submit', async (e) => {
+          if (e.target.id !== 'live-login-form') return;
+          e.preventDefault();
+          const form = e.target,
+            button = form.querySelector('button');
+          button.disabled = true;
+          const teacher = live.loginTarget !== 'student',
+            credential = new FormData(form).get('credential');
+          try {
+            live.session = await liveApi(
+              'auth/' + (teacher ? 'teacher' : 'classroom'),
+              'POST',
+              teacher ? { password: credential } : { code: credential },
+            );
+            live.pending = null;
+            live.conflict = false;
+            live.needsAuth = false;
+            try {
+              await loadLiveState();
+            } catch (err) {
+              if (!teacher || err.status !== 404) throw err;
+              live.epoch = '';
+            }
+            if (teacher) {
+              setTeacher(teacherId);
+              navigate(live.loginTarget === 'teacher-share' ? 'teacher-share' : 'teacher');
+            } else navigate('names');
+          } catch (err) {
+            feedback(err.message || '연결하지 못했어요');
+          } finally {
+            button.disabled = false;
+          }
+        });
+
+        root.addEventListener('click', async (e) => {
           const button = e.target.closest('[data-action]');
           if (!button) {
-            if (screen === 'title') navigate('names');
+            if (screen === 'title') root.querySelector('[data-action="start"]').click();
             return;
           }
           if (button.disabled) return;
@@ -2952,6 +3617,12 @@
             id = button.dataset.id,
             s = student(),
             p = s?.progress;
+          try {
+            if (await handleLiveAction(action, id, button)) return;
+          } catch (err) {
+            feedback(err.message || '연결을 확인해 주세요');
+            return;
+          }
           if (action === 'start' || action === 'names') {
             navigate('names');
             return;
@@ -3068,7 +3739,7 @@
           if (action === 'teacher-share') {
             if (screen === 'teacher' && !confirmTeacherLeave()) return;
             const selected = data.students.find((s) => s.id === id);
-            if (selected?.progress.stage !== 'completed') return;
+            if (!selected) return;
             shareStudentId = id;
             navigate('teacher-share');
             return;
@@ -3343,16 +4014,17 @@
             !e.target.closest('button[data-action="teacher"],button[data-action="teacher-gallery"]')
           ) {
             e.preventDefault();
-            navigate('names');
+            root.querySelector('[data-action="start"]').click();
           }
         });
         window.addEventListener('beforeunload', (e) => {
-          if (teacherDirty || uploading) {
+          if (teacherDirty || uploading || live.pending) {
             e.preventDefault();
             e.returnValue = '';
           }
         });
         render();
+        void bootLive();
       })();
     </script>
   </body>
