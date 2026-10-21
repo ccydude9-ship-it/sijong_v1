@@ -2066,7 +2066,7 @@
         margin-bottom: 4px;
       }
       .picture-button {
-        height: clamp(136px, calc(20vh + 12px), 202px);
+        height: clamp(136px, 20vh, 190px);
       }
       .order-card .order-info {
         min-height: 18px;
@@ -2092,6 +2092,17 @@
           height: clamp(132px, calc((100vh - 480px) / 2), 280px);
           width: auto;
         }
+      }
+      /* Uploaded files already contain the full card frame. */
+      .paper-card.uploaded-card {
+        padding: 0;
+        gap: 0;
+        border: 0;
+        background: transparent;
+        display: block;
+      }
+      .picture-button {
+        padding: 0;
       }
     </style>
   </head>
