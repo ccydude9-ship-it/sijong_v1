@@ -77,13 +77,17 @@ test('teacher sees two independent tablets before completion and offline edits r
       'src',
       prepared.image,
     );
-    await expect(a.locator('[data-reading-card]').first()).toContainText('준비된 아침 카드');
+    await expect(
+      a.locator('[data-reading-card]').first().locator('.picture-button'),
+    ).toHaveAccessibleName('준비된 아침 카드 카드 뒤집기');
     expect(
       await a.evaluate(
         () => JSON.parse(localStorage.getItem('sijong.single.v1')!).students[0].cards[0].minute,
       ),
     ).toBe(prepared.minute);
-    await expect(b.locator('[data-reading-card]').first()).not.toContainText('준비된 아침 카드');
+    await expect(
+      b.locator('[data-reading-card]').first().locator('.picture-button'),
+    ).not.toHaveAccessibleName('준비된 아침 카드 카드 뒤집기');
     await a
       .getByRole('button', { name: /시각 고르기/ })
       .first()
@@ -157,9 +161,17 @@ test('teacher sees two independent tablets before completion and offline edits r
         (id: string) => s.cards.find((c: { id: string }) => c.id === id).title,
       );
     });
-    await expect(teacher.locator('.timeline-card h2')).toHaveText(expectedOrder, {
-      timeout: 10000,
-    });
+    await expect
+      .poll(
+        () =>
+          teacher
+            .locator('.timeline-card')
+            .evaluateAll((nodes) =>
+              nodes.map((n) => n.getAttribute('aria-label')?.replace(/ 크게 보기$/, '')),
+            ),
+        { timeout: 10000 },
+      )
+      .toEqual(expectedOrder);
     const sortedIds = await a.evaluate(() =>
       JSON.parse(localStorage.getItem('sijong.single.v1')!)
         .students[0].cards.sort((x: any, y: any) => x.minute - y.minute)

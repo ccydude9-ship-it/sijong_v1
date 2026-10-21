@@ -2060,6 +2060,39 @@
         width: 100%;
         height: auto;
       }
+      .reading-card .card-top {
+        min-height: 16px;
+        justify-content: flex-end;
+        margin-bottom: 4px;
+      }
+      .picture-button {
+        height: clamp(136px, calc(20vh + 12px), 202px);
+      }
+      .order-card .order-info {
+        min-height: 18px;
+      }
+      .order-tile > .paper-card {
+        height: clamp(138px, calc(18vh + 14px), 184px);
+      }
+      .timeline-card > .paper-card {
+        aspect-ratio: var(--card-ratio);
+        width: auto;
+      }
+      .practical-page:has(#completion-status) .timeline-card > .paper-card {
+        height: clamp(140px, calc(22vh + 20px), 220px);
+      }
+      .presentation-dialog {
+        padding-top: 58px;
+      }
+      .presentation-dialog .presentation-flip {
+        width: min(46vh, calc(100% - 88px));
+      }
+      @media (min-width: 700px) {
+        .teacher-share-page.has-selected .timeline-card > .paper-card {
+          height: clamp(132px, calc((100vh - 480px) / 2), 280px);
+          width: auto;
+        }
+      }
     </style>
   </head>
   <body>
@@ -3115,9 +3148,7 @@
                   (c) =>
                     '<article class="reading-card panel" data-reading-card="' +
                     esc(c.id) +
-                    '"><div class="card-top"><h2>' +
-                    esc(c.title) +
-                    '</h2><span class="period">' +
+                    '"><div class="card-top"><span class="period">' +
                     (c.minute < 720 ? '오전' : '오후') +
                     '</span></div><button class="picture-button" data-action="flip" data-id="' +
                     esc(c.id) +
@@ -3208,9 +3239,7 @@
                     '</span>' +
                     frontCard(s, c) +
                     (target ? '<span class="place-tag">여기에 놓기</span>' : '') +
-                    '<span class="order-info"><strong>' +
-                    esc(c.title) +
-                    '</strong><small>' +
+                    '<span class="order-info"><small>' +
                     timeText(c.minute) +
                     '</small></span></button></article>'
                   );
@@ -3270,9 +3299,7 @@
                     : timeText(c.minute)) +
                   '</span>' +
                   frontCard(s, c) +
-                  '<h2>' +
-                  esc(c.title) +
-                  '</h2></article>'
+                  '</article>'
                 );
               })
               .join('') +
@@ -3495,8 +3522,6 @@
               '<dialog class="answer-dialog" aria-label="' +
               esc(c.title) +
               ' 시각 입력"><h2>' +
-              esc(c.title) +
-              ' · ' +
               (c.minute < 720 ? '오전' : '오후') +
               '</h2><div class="answer-dialog-grid">' +
               '<div><button class="dialog-flip" data-action="dialog-flip" aria-label="입력창 카드 뒤집기" aria-pressed="' +
@@ -3533,9 +3558,7 @@
             const position = order.indexOf(presentationCardId);
             if (card)
               html +=
-                '<dialog class="answer-dialog presentation-dialog" aria-label="일과 카드 발표"><h2>' +
-                esc(card.title) +
-                '</h2><button class="secondary presentation-arrow previous" data-action="presentation-prev" aria-label="이전 카드" ' +
+                '<dialog class="answer-dialog presentation-dialog" aria-label="일과 카드 발표"><button class="secondary presentation-arrow previous" data-action="presentation-prev" aria-label="이전 카드" ' +
                 (position === 0 ? 'disabled' : '') +
                 '>‹</button><button class="secondary presentation-arrow next" data-action="presentation-next" aria-label="다음 카드" ' +
                 (position === order.length - 1 ? 'disabled' : '') +

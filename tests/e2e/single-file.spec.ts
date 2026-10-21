@@ -239,12 +239,14 @@ test('own cards can be read ordered and shared with serverless grading', async (
   await page.getByRole('button', { name: '별이의 일어나기 크게 보기', exact: true }).click();
   const popup = page.getByRole('dialog');
   await expect(popup.getByRole('button', { name: '이전 카드' })).toBeDisabled();
+  await expect(popup.locator('h2')).toHaveCount(0);
   const cardBox = await popup.locator('.paper-card').boundingBox();
+  expect(cardBox!.width / cardBox!.height).toBeCloseTo(0.7, 2);
   await popup.getByRole('button', { name: '다음 카드' }).click();
-  await expect(popup.locator('h2')).toContainText('아침 먹기');
+  await expect(popup.locator('.card-caption')).toContainText('아침 먹기');
   expect(await popup.locator('.paper-card').boundingBox()).toEqual(cardBox);
   await popup.getByRole('button', { name: '이전 카드' }).click();
-  await expect(popup.locator('h2')).toContainText('일어나기');
+  await expect(popup.locator('.card-caption')).toContainText('일어나기');
   await popup.getByRole('button', { name: '발표 카드 뒤집기' }).click();
   await expect(popup.locator('.clock-face')).toBeVisible();
   await popup.getByRole('button', { name: '닫기', exact: true }).click();
