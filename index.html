@@ -2104,6 +2104,113 @@
       .picture-button {
         padding: 0;
       }
+      .practice-layout .clock-panel { position: relative; }
+      .practice-period { position: absolute; top: 8px; left: 12px; }
+      .practice-page .reward-card .reward-caption {
+        position: absolute; top: 100%; left: -36px; right: -36px;
+        display: flex; flex-direction: column; align-items: center;
+        gap: 10px; padding-top: 12px;
+      }
+      .practice-page .reward-card .reward-time {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 104px; height: 36px; padding: 0 16px;
+        border-radius: 10px; background: #edf6ff; color: #2474bc;
+        font-size: 20px; font-weight: 700; line-height: 1;
+        white-space: nowrap; font-variant-numeric: tabular-nums;
+      }
+      .practice-page .reward-card .reward-caption small {
+        position: static; margin: 0; font-size: 13px; line-height: 1.5;
+      }
+      .hint-explanation { width: 100%; font-size: 13px; line-height: 1.6; word-break: keep-all; }
+      .paper-card .card-clock { position: relative; }
+      .clock-period {
+        position: absolute; top: 0; left: 0;
+        color: #2474bc; background: #edf6ff; border-radius: 5px;
+        padding: 2px 5px; font-size: clamp(9px, 1.1vw, 14px);
+        font-weight: 700; line-height: 1.3; z-index: 1;
+      }
+      .timeline-card .clock-question { font-size: 8px; white-space: nowrap; }
+      .timeline-card .clock-period { font-size: 8px; padding: 1px 3px; }
+      .timeline-card .card-clock { padding-top: 12px; }
+      .reading-grid .clock-period, .reading-grid .card-top .period { visibility: hidden; }
+      .share-face-controls { display: flex; justify-content: center; gap: 8px; margin: 12px 0; }
+      .share-face-controls button { min-width: 108px; }
+      .share-face-controls button[aria-pressed="true"] { background: #e9e5ff; color: #5144b8; border-color: #7061d4; }
+      .reading-grid .picture-button {
+        height: clamp(170px, 26vh, 240px); border: 0;
+        background: transparent; cursor: default; margin: 0 auto 8px;
+      }
+      .share-face-controls { justify-content: flex-end; margin: 0 0 8px; }
+      .share-face-controls button {
+        min-width: 0; min-height: 36px; font-size: 12px;
+        padding: 6px 12px; border-radius: 10px; line-height: 1.3;
+      }
+      .practice-layout .reward-panel.practice-wrong {
+        border-color: #cf594d;
+        box-shadow: inset 0 0 0 2px #cf594d, var(--shadow);
+      }
+      /* One typographic style for displayed times; inputs keep their larger size. */
+      .practice-page .reward-card .reward-time,
+      .practical-page .order-card .order-info small,
+      .practical-page .timeline-time,
+      .teacher-share-page .timeline-time,
+      .practical-page .answer-summary {
+        font-family: inherit; font-size: 18px; font-weight: 700;
+        line-height: 1.4; letter-spacing: 0; color: #2474bc;
+        font-variant-numeric: tabular-nums; white-space: nowrap;
+      }
+      .time-readout, .time-readout > span, .clock-period {
+        font-family: inherit; font-weight: 700; letter-spacing: 0;
+        font-variant-numeric: tabular-nums;
+      }
+      .paper-card .card-caption {
+        white-space: nowrap; min-width: 0; overflow: hidden;
+        height: 1.7em; display: flex; align-items: center; justify-content: center;
+      }
+      .paper-card .caption-text { display: inline-block; white-space: nowrap; line-height: 1.2; }
+      .paper-card .card-caption {
+        color: #2474bc; background: #edf6ff; font-weight: 700;
+        letter-spacing: 0; font-variant-numeric: tabular-nums;
+      }
+      .reading-grid .picture-button {
+        height: clamp(190px, 29vh, 270px); cursor: pointer; margin: 0 auto;
+      }
+      /* Shared card geometry: all inset measurements scale with the card width. */
+      .paper-card.paper-card {
+        --card-width: 140px;
+        display: grid;
+        grid-template-rows: 9% minmax(0, 1fr) 9%;
+        padding: calc(var(--card-width) * .035) calc(var(--card-width) * .055);
+        gap: calc(var(--card-width) * .015);
+        border: 1.5px solid #4595ee;
+        border-radius: calc(var(--card-width) * .075);
+        background: #fff; overflow: hidden; box-sizing: border-box;
+      }
+      .paper-card.paper-card::before { display: none; }
+      .paper-card .card-name, .paper-card .card-caption,
+      .paper-card .clock-question {
+        margin: 0; min-width: 0; min-height: 0; height: auto;
+        padding: 0 2px; border: 0;
+        border-radius: calc(var(--card-width) * .025);
+        display: flex; align-items: center; justify-content: center;
+        font-size: clamp(8px, calc(var(--card-width) * .075), 24px);
+        line-height: 1.2; white-space: nowrap; box-sizing: border-box;
+      }
+      .paper-card .card-name { background: #e1f1ff; color: #2474bc; }
+      .paper-card .card-caption { background: #edf6ff; color: #2474bc; font-weight: 700; }
+      .paper-card .clock-question { font-size: clamp(7px, calc(var(--card-width) * .055), 17px); background: #f2f8ff; }
+      .paper-card .card-drawing, .paper-card .card-clock {
+        margin: 0; padding: 0; min-width: 0; min-height: 0;
+        border-radius: calc(var(--card-width) * .025); overflow: hidden;
+      }
+      .paper-card .card-clock { padding-top: calc(var(--card-width) * .07); }
+      .paper-card .card-clock .clock { width: 100%; height: 100%; max-height: 100%; }
+      .paper-card .clock-period { font-size: clamp(7px, calc(var(--card-width) * .06), 16px); }
+      .answer-dialog .input-error { border: 0; padding: 0; outline: 2px solid #cf594d; outline-offset: 6px; }
+      .paper-card .card-drawing img {
+        width: 100%; height: 100%; object-fit: cover; object-position: center;
+      }
+      .paper-card .card-drawing img { transform: scale(var(--edge-scale, 1)); transform-origin: right center; }
     </style>
   </head>
   <body>
@@ -2327,6 +2434,7 @@
         }
         let selectedOrderId = '',
           shareStudentId = '',
+          shareCardFace = 'clock',
           presentationCardId = '',
           presentationFlipped = false,
           editingCardId = '',
@@ -2831,36 +2939,32 @@
             '</div>' +
             (back
               ? '<span class="clock-question">몇 시 몇 분일까요?</span>'
-              : '<span class="card-caption">' + esc(caption) + '</span>') +
+              : '<span class="card-caption"><span class="caption-text">' + esc(caption) + '</span></span>') +
             '</div>'
           );
         }
-        function clockCard(s, hour, minute, hint = 'none') {
-          return cardFrame(s, clock(hour, minute, hint), '', true);
+        function clockCard(s, hour, minute, hint = 'none', totalMinute = hour * 60 + minute) {
+          return cardFrame(s, '<span class="clock-period">' + (totalMinute < 720 ? '오전' : '오후') + '</span>' + clock(hour, minute, hint), '', true);
         }
-        function frontCard(s, c) {
-          if (c.image)
-            return (
-              '<div class="paper-card uploaded-card">' + art(c, data.students.indexOf(s)) + '</div>'
-            );
+        function frontCard(s, c, showTime = true) {
           return cardFrame(
             s,
             art(c, data.students.indexOf(s)),
-            c.title.replace(s.name + '의 ', ''),
+            showTime ? timeText(c.minute) : '\u00a0',
           );
         }
         function hintText(q) {
           if (q.hint === 'minute') return '긴 바늘이 12를 가리키면 00분, 6을 가리키면 30분이에요.';
           if (q.hint === 'hour')
             return q.minute === 0
-              ? '짧은 바늘이 가리키는 숫자가 몇 시인지 살펴봐요.'
-              : '짧은 바늘이 두 숫자 사이에 있으면, 이미 지나온 숫자를 읽어요.';
+              ? '짧은 바늘이 가리키는 숫자를 읽어요.'
+              : '두 숫자 사이에서는 지나온 숫자를 읽어요.';
           return '바늘이 헷갈리면 아래 도움말을 눌러 보세요.';
         }
         function art(card, slot = 0) {
           if (card.image && /^data:image\/(png|jpeg|webp);base64,/i.test(card.image))
             return (
-              '<img class="artwork" src="' + esc(card.image) + '" alt="' + esc(card.title) + '">'
+              '<img class="artwork" style="--edge-scale:' + (typeof DRAWING_EDGE_CROPS !== 'undefined' ? (DRAWING_EDGE_CROPS.get(card.image) || 1) : 1) + '" src="' + esc(card.image) + '" alt="' + esc(card.title) + '">'
             );
           const scenes = [
             '<circle cx="150" cy="48" r="22" fill="#ffcd64"/><path d="M150 12v-8M150 84v8M114 48h-8M186 48h8M124 22l-7-7M177 75l7 7" stroke="#ffcd64" stroke-width="5" stroke-linecap="round"/><rect x="45" y="103" width="132" height="42" rx="12" fill="#8cb9ce"/><path d="M42 119v34M176 119v34" stroke="#637c9d" stroke-width="8" stroke-linecap="round"/><rect x="52" y="96" width="46" height="28" rx="10" fill="white"/><circle cx="74" cy="96" r="17" fill="#f2bf99"/><path d="M97 111h69" stroke="#c1d9c7" stroke-width="28" stroke-linecap="round"/>',
@@ -2888,13 +2992,16 @@
           return (
             (min < 720 ? '오전 ' : '오후 ') +
             (Math.floor(min / 60) % 12 || 12) +
-            '시 ' +
-            String(min % 60).padStart(2, '0') +
-            '분'
+            '시' +
+            (min % 60 === 0 ? '' : ' ' + (min % 60) + '분')
           );
         }
         const blankTime = '<span class="time-blank" role="img" aria-label="미선택"></span>';
-        function timeInput(answer, scope, id, wrong = false, disabled = false) {
+        function answerText(answer) {
+          return (answer?.hour ?? blankTime) + '시' +
+            (answer?.minute === 0 ? '' : ' ' + (answer?.minute ?? blankTime) + '분');
+        }
+        function timeInput(answer, scope, id, wrong = false, disabled = false, feedbackText = '') {
           const attr = ' data-scope="' + scope + '" data-id="' + esc(id) + '"';
           return (
             '<div class="time-input ' +
@@ -2942,7 +3049,7 @@
               .join('') +
             '</div>' +
             '<p class="input-caption" aria-live="polite">' +
-            (wrong
+            (feedbackText ? esc(feedbackText) : wrong
               ? '이 시각을 다시 읽어 볼까요?'
               : !disabled && !validTime(answer)
                 ? answer?.hour == null
@@ -2957,14 +3064,14 @@
           return '<main class="title-page"><div class="arcade-label">TICK TOCK · MY LITTLE DAY</div><button class="title-start" data-action="start" aria-label="게임 시작"><div class="mascot-clock" aria-hidden="true"></div><h1><span>시계는 째깍!</span> <span>하루는 찰칵!</span></h1><div class="press">PRESS ANY BUTTON</div><div class="title-caption">게임을 시작하려면 아무 버튼이나 누르세요</div></button><div class="title-footer"><span class="subtle" style="color:#b3afd0">나만의 하루를 만드는 시간 여행</span></div></main>';
         }
         function presetAvatar(cell) {
-          const x = (cell % 2) * 512,
-            y = Math.floor(cell / 2) * 512 + 24;
+          const x = (cell % 2) * 512 + [64, 42, 60, 36, 64, 40][cell],
+            y = Math.floor(cell / 2) * 512 + [84, 100, 86, 88, 96, 82][cell];
           return (
-            '<svg class="preset-portrait" viewBox="0 0 512 512" aria-hidden="true"><svg x="46" y="30" width="420" height="420" viewBox="' +
+            '<svg class="preset-portrait" viewBox="0 0 512 512" aria-hidden="true"><svg x="0" y="0" width="512" height="512" viewBox="' +
             x +
             ' ' +
             y +
-            ' 512 480" overflow="hidden"><image width="1024" height="1536" href="' +
+            ' 400 400" overflow="hidden"><image width="1024" height="1536" href="' +
             esc(data.portraitSheet || '') +
             '"/></svg></svg>'
           );
@@ -3069,12 +3176,22 @@
           );
         }
         function newQuestion() {
-          const cards = student().cards.filter((c) => c.id !== student().progress.practice?.cardId),
-            card = cards[Math.floor(Math.random() * cards.length)];
+          const s = student(), previous = s.progress.practice;
+          let remaining = Array.isArray(previous?.remaining)
+            ? [...new Set(previous.remaining)].filter((id) => s.cards.some((c) => c.id === id))
+            : [];
+          if (!remaining.length) {
+            remaining = shuffle(s.cards.map((c) => c.id));
+            if (remaining.length > 1 && remaining[0] === previous?.cardId)
+              [remaining[0], remaining[1]] = [remaining[1], remaining[0]];
+          }
+          const nextId = remaining.shift();
+          const card = s.cards.find((c) => c.id === nextId);
           return {
             hour: Math.floor(card.minute / 60) % 12 || 12,
             minute: card.minute % 60,
             cardId: card.id,
+            remaining,
             answer: null,
             hint: 'none',
             correct: false,
@@ -3090,6 +3207,7 @@
           const s = student(),
             p = s.progress,
             q = p.practice;
+          const practiceCard = s.cards.find((c) => c.id === q.cardId);
           const match = q.correct
             ? s.cards.find((c) =>
                 q.cardId
@@ -3107,14 +3225,14 @@
               ) +
               notice() +
               '<div class="practice-layout"><div class="panel clock-panel">' +
-              clockCard(s, q.hour, q.minute, q.hint) +
+              clockCard(s, q.hour, q.minute, q.hint, practiceCard?.minute ?? q.hour * 60 + q.minute) +
               '<div class="hint-actions"><button class="ghost" data-action="hint" data-value="minute" aria-pressed="' +
               (q.hint === 'minute') +
               '">긴 바늘 따라가기</button><button class="ghost" data-action="hint" data-value="hour" aria-pressed="' +
               (q.hint === 'hour') +
               '">짧은 바늘 사이 보기</button></div><p class="hint-explanation" aria-live="polite">' +
               hintText(q) +
-              '</p></div><div class="panel reward-panel">' +
+              '</p></div><div class="panel reward-panel' + (q.wrong && !q.correct ? ' practice-wrong' : '') + '">' +
               (match
                 ? '<button class="reward-card" data-action="next" aria-label="' +
                   esc(match.title) +
@@ -3122,7 +3240,7 @@
                   (data.phase === 'ended' ? 'disabled' : '') +
                   '>' +
                   frontCard(s, match) +
-                  '<small>카드를 한 번 더 누르면 다음 문제로 넘어가요</small></button>'
+                  '<span class="reward-caption"><small>카드를 한 번 더 누르면 다음 문제로 넘어가요</small></span></button>'
                 : '<span class="eyebrow">시각을 골라요</span>' +
                   timeInput(
                     q.answer,
@@ -3130,6 +3248,7 @@
                     'practice',
                     false,
                     q.correct || data.phase === 'ended',
+                    q.wrong ? '다시 읽어볼까요? 힌트를 눌러보세요.' : '',
                   )) +
               (q.correct
                 ? ''
@@ -3150,7 +3269,7 @@
               heading(
                 '실전모드 · MY DAILY CARDS',
                 '착착! 맞춰봐',
-                '카드 아래 시각을 눌러 답을 골라요. 위에 4장, 아래에 4장이에요.',
+                '카드를 눌러 그림을 보고, 시계로 뒤집어 시각을 맞혀요.',
               ) +
               notice() +
               '<div class="reading-grid">' +
@@ -3159,37 +3278,10 @@
                   (c) =>
                     '<article class="reading-card panel" data-reading-card="' +
                     esc(c.id) +
-                    '"><div class="card-top"><span class="period">' +
-                    (c.minute < 720 ? '오전' : '오후') +
-                    '</span></div><button class="picture-button" data-action="flip" data-id="' +
-                    esc(c.id) +
-                    '" aria-label="' +
-                    esc(c.title) +
-                    ' 카드 뒤집기">' +
-                    (p.flipped[c.id]
-                      ? clockCard(s, Math.floor(c.minute / 60) % 12 || 12, c.minute % 60)
-                      : frontCard(s, c)) +
-                    '<span class="flip-hint">' +
-                    (p.flipped[c.id] ? '그림 보기 ↻' : '시계 보기 ↻') +
-                    '</span></button>' +
-                    '<button class="answer-summary ' +
-                    (p.wrong.includes(c.id) ? 'wrong' : '') +
-                    '" data-action="open-answer" data-id="' +
-                    esc(c.id) +
-                    '" aria-label="' +
-                    esc(c.title) +
-                    ' 시각 고르기">' +
-                    (p.answers[c.id]
-                      ? (p.answers[c.id].hour ?? blankTime) +
-                        '시 ' +
-                        (p.answers[c.id].minute == null
-                          ? blankTime
-                          : String(p.answers[c.id].minute).padStart(2, '0')) +
-                        '분'
-                      : blankTime + '시 ' + blankTime + '분') +
-                    '<small>' +
-                    (p.wrong.includes(c.id) ? '다시 읽어 보세요' : '눌러서 시각 고르기') +
-                    '</small></button>' +
+                    '"><button class="picture-button" data-action="open-answer" data-id="' +
+                    esc(c.id) + '" aria-label="' + esc(c.title) + ' 시각 맞히기">' +
+                    frontCard(s, c, p.answers[c.id]?.hour === (Math.floor(c.minute / 60) % 12 || 12) && p.answers[c.id]?.minute === c.minute % 60) +
+                    '</button>' +
                     '</article>',
                 )
                 .join('') +
@@ -3250,9 +3342,7 @@
                     '</span>' +
                     frontCard(s, c) +
                     (target ? '<span class="place-tag">여기에 놓기</span>' : '') +
-                    '<span class="order-info"><small>' +
-                    timeText(c.minute) +
-                    '</small></span></button></article>'
+                    '</button></article>'
                   );
                 })
                 .join('') +
@@ -3299,17 +3389,10 @@
                       esc(c.title) +
                       ' 크게 보기"'
                     : '') +
-                  '><span class="timeline-time">' +
-                  (s.progress.stage === 'reading'
-                    ? (s.progress.answers[c.id]?.hour ?? blankTime) +
-                      '시 ' +
-                      (s.progress.answers[c.id]?.minute == null
-                        ? blankTime
-                        : String(s.progress.answers[c.id].minute).padStart(2, '0')) +
-                      '분'
-                    : timeText(c.minute)) +
-                  '</span>' +
-                  frontCard(s, c) +
+                  '>' +
+                  (screen === 'teacher-share' && shareCardFace === 'clock'
+                    ? clockCard(s, Math.floor(c.minute / 60) % 12 || 12, c.minute % 60, 'none', c.minute)
+                    : frontCard(s, c)) +
                   '</article>'
                 );
               })
@@ -3330,6 +3413,7 @@
               esc(liveText()) +
               '</p>' +
               notice() +
+              '<div class="share-face-controls"><button class="ghost" data-action="share-face" aria-label="' + (shareCardFace === 'clock' ? '그림카드로 전환' : '시계카드로 전환') + '">' + (shareCardFace === 'clock' ? '시계카드' : '그림카드') + ' ↔</button></div>' +
               '<div class="teacher-gallery" aria-label="공유할 학생">' +
               data.students
                 .map(
@@ -3435,7 +3519,7 @@
               esc(t.name) +
               '" maxlength="30"></label><label>같은 이름 구별하기<input aria-label="같은 이름 구별하기" data-field="distinction" value="' +
               esc(t.distinction) +
-              '" maxlength="20" placeholder="예: 꽃, 별"></label></div><p class="subtle">캔바에서 카드를 PNG로 내려받아 각 카드의 그림 바꾸기에 넣어 주세요. 세로 카드 전체가 잘리지 않게 표시됩니다. 카드에 적힌 시각과 아래 시각을 같게 맞춰 주세요. 첫 카드는 일어나기, 마지막 카드는 잠자기예요. 저장하면 이 학생의 실전 진행은 처음부터 시작합니다.</p><div class="editor-grid">' +
+              '" maxlength="20" placeholder="예: 꽃, 별"></label></div><p class="subtle">테두리와 글씨를 제외한 그림 사진만 각 카드의 그림 바꾸기에 넣어 주세요. 그림 비율은 유지하고 카드 틀과 글씨는 자동으로 맞춰집니다. 아래에서 일과 이름과 시각을 설정해 주세요. 첫 카드는 일어나기, 마지막 카드는 잠자기예요. 저장하면 이 학생의 실전 진행은 처음부터 시작합니다.</p><div class="editor-grid">' +
               t.cards
                 .map(
                   (c, i) =>
@@ -3499,6 +3583,22 @@
               '</p></section><div class="actions"><button class="ghost danger" data-action="reset-progress">모든 학생의 학습 기록만 초기화</button></div>',
           );
         }
+        function fitCardCaptions() {
+          root.querySelectorAll('.paper-card').forEach(card => card.style.setProperty('--card-width', card.getBoundingClientRect().width + 'px'));
+          root.querySelectorAll('.card-caption').forEach(caption => {
+            const text = caption.querySelector('.caption-text');
+            if (!text || !caption.clientWidth) return;
+            text.style.fontSize = '';
+            const base = parseFloat(getComputedStyle(caption).fontSize);
+            const style = getComputedStyle(caption);
+            const available = caption.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 2;
+            const width = text.getBoundingClientRect().width;
+            if (width > available && available > 0)
+              text.style.fontSize = (base * available / width) + 'px';
+          });
+        }
+        window.addEventListener('resize', () => requestAnimationFrame(fitCardCaptions));
+        document.fonts?.ready.then(fitCardCaptions);
         function render() {
           const scrollPosition = { x: window.scrollX, y: window.scrollY };
           const oldDialogScroll = root.querySelector('dialog')?.scrollTop || 0;
@@ -3532,17 +3632,15 @@
             html +=
               '<dialog class="answer-dialog" aria-label="' +
               esc(c.title) +
-              ' 시각 입력"><h2>' +
-              (c.minute < 720 ? '오전' : '오후') +
-              '</h2><div class="answer-dialog-grid">' +
+              ' 시각 입력"><h2 aria-hidden="true">&nbsp;</h2><div class="answer-dialog-grid">' +
               '<div><button class="dialog-flip" data-action="dialog-flip" aria-label="입력창 카드 뒤집기" aria-pressed="' +
               dialogFlipped +
               '">' +
               (dialogFlipped
-                ? frontCard(student(), c)
-                : clockCard(student(), Math.floor(c.minute / 60) % 12 || 12, c.minute % 60)) +
+                ? frontCard(student(), c, false)
+                : clockCard(student(), Math.floor(c.minute / 60) % 12 || 12, c.minute % 60, 'none', c.minute)) +
               '</button><p class="center subtle">' +
-              (dialogFlipped ? '다시 누르면 시계가 보여요' : '카드를 누르면 그림이 보여요') +
+              (dialogFlipped ? '그림을 누르면 시계가 보여요' : '카드를 누르면 그림이 보여요') +
               '</p></div>' +
               timeInput(
                 p.answers[c.id],
@@ -3553,7 +3651,7 @@
               ) +
               '</div><div class="actions"><button class="primary" data-action="close-answer" ' +
               (!validTime(p.answers[c.id]) ? 'disabled' : '') +
-              '>입력 완료</button></div></dialog>';
+              '>정답 확인하기</button></div></dialog>';
           }
           if ((screen === 'teacher-share' || waiting()) && presentationCardId) {
             const owner = waiting()
@@ -3577,7 +3675,7 @@
                 presentationFlipped +
                 '">' +
                 (presentationFlipped
-                  ? clockCard(owner, Math.floor(card.minute / 60) % 12 || 12, card.minute % 60)
+                  ? clockCard(owner, Math.floor(card.minute / 60) % 12 || 12, card.minute % 60, 'none', card.minute)
                   : frontCard(owner, card)) +
                 '</button><p class="center">카드를 누르면 그림과 시계를 번갈아 볼 수 있어요.</p></dialog>';
           }
@@ -3606,6 +3704,7 @@
             );
             dialog.showModal();
           }
+          fitCardCaptions();
           if (focusKey) {
             const area = dialog || root;
             const nextFocus = Array.from(area.querySelectorAll('[data-action]')).find((el) =>
@@ -3959,9 +4058,14 @@
             navigate('title');
             return;
           }
+          if (action === 'share-face') {
+            shareCardFace = shareCardFace === 'clock' ? 'picture' : 'clock';
+            render();
+            return;
+          }
           if (action === 'present-card') {
             presentationCardId = id;
-            presentationFlipped = false;
+            presentationFlipped = screen === 'teacher-share' && shareCardFace === 'clock';
             render();
             return;
           }
@@ -3978,7 +4082,7 @@
               order.indexOf(presentationCardId) + (action === 'presentation-next' ? 1 : -1);
             if (next < 0 || next >= order.length) return;
             presentationCardId = order[next];
-            presentationFlipped = false;
+            presentationFlipped = screen === 'teacher-share' && shareCardFace === 'clock';
             render();
             return;
           }
@@ -4062,7 +4166,7 @@
           }
           if (action === 'open-answer') {
             editingCardId = id;
-            dialogFlipped = false;
+            dialogFlipped = true;
             render();
             return;
           }
@@ -4070,6 +4174,19 @@
             dialogFlipped = !dialogFlipped;
             render();
             return;
+          }
+          if (action === 'close-answer') {
+            const card = s.cards.find(c => c.id === editingCardId);
+            const answer = p.answers[editingCardId];
+            if (!card || !validTime(answer)) return;
+            if (answer.hour !== (Math.floor(card.minute / 60) % 12 || 12) || answer.minute !== card.minute % 60) {
+              if (!p.wrong.includes(card.id)) p.wrong.push(card.id);
+              saveProgress();
+              render();
+              return;
+            }
+            p.wrong = p.wrong.filter(id => id !== card.id);
+            saveProgress();
           }
           if (action === 'close-answer' || action === 'leave-answer') {
             presentationCardId = '';
@@ -4159,6 +4276,7 @@
               if (q) {
                 if (q.correct) return;
                 q.answer = next;
+                q.wrong = false;
               } else {
                 p.answers[id] = next;
                 p.wrong = p.wrong.filter((x) => x !== id);
@@ -4174,12 +4292,19 @@
             if (q.correct || !validTime(q.answer)) return;
             if (q.answer.hour === q.hour && q.answer.minute === q.minute) {
               q.correct = true;
+              q.wrong = false;
               p.solved++;
               saveProgress();
               message = '';
               messageKind = '';
               render();
-            } else feedback('다시 한번 읽어 볼까요? 힌트를 눌러도 좋아요.');
+            } else {
+              q.wrong = true;
+              message = '';
+              messageKind = '';
+              saveProgress();
+              keepScroll(() => {});
+            }
             return;
           }
           if (action === 'next') {
