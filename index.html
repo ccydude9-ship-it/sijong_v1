@@ -3369,6 +3369,13 @@
               timeline(student()),
           );
         }
+        function presentationOrder(s) {
+          if (!s) return [];
+          if (screen === 'teacher-share' && !live.enabled)
+            return [...s.cards].sort((a,b) => a.minute - b.minute).map(c => c.id);
+          return s.progress.completedOrder ||
+            (s.progress.stage === 'reading' ? s.cards.map(c => c.id) : s.progress.order);
+        }
         function timeline(s) {
           if (s.progress.completedOrder)
             s = {
@@ -3377,7 +3384,7 @@
             };
           return (
             '<div class="timeline">' +
-            (s.progress.stage === 'reading' ? s.cards.map((c) => c.id) : s.progress.order)
+            presentationOrder(s)
               .map((id) => {
                 const c = s.cards.find((c) => c.id === id);
                 return (
@@ -3407,11 +3414,9 @@
               heading(
                 'TEACHER SHARING',
                 '찰칵! 함께봐',
-                '학생 이름을 누르면 지금 입력한 시각과 카드 배열을 볼 수 있어요.',
+                live.enabled ? '학생 이름을 누르면 지금 입력한 시각과 카드 배열을 볼 수 있어요.' : '학생 이름을 눌러 하루를 시간순으로 함께 봐요.',
               ) +
-              '<p class="teacher-warning" id="live-status">' +
-              esc(liveText()) +
-              '</p>' +
+              (live.enabled ? '<p class="teacher-warning" id="live-status">' + esc(liveText()) + '</p>' : '') +
               notice() +
               '<div class="share-face-controls"><button class="ghost" data-action="share-face" aria-label="' + (shareCardFace === 'clock' ? '그림카드로 전환' : '시계카드로 전환') + '">' + (shareCardFace === 'clock' ? '시계카드' : '그림카드') + ' ↔</button></div>' +
               '<div class="teacher-gallery" aria-label="공유할 학생">' +
@@ -3430,20 +3435,20 @@
                     avatar(s, i) +
                     '<strong>' +
                     esc(label(s)) +
-                    '</strong><small>' +
-                    esc(liveStage(s)) +
+                    '</strong>' +
+                    (live.enabled ? '<small>' + esc(liveStage(s)) : '') +
                     (live.enabled
                       ? '<span class="presence">' +
                         (live.meta[s.id]?.connected ? '활동 중' : '연결 대기') +
                         '</span>'
                       : '') +
-                    '</small></button>',
+                    (live.enabled ? '</small>' : '') + '</button>',
                 )
                 .join('') +
               '</div>' +
               (chosen
                 ? timeline(chosen)
-                : '<p class="center subtle">학생 이름을 눌러 활동 중인 모습도 함께 봐요.</p>'),
+                : '<p class="center subtle">학생 이름을 눌러 완성된 하루를 함께 봐요.</p>'),
           );
         }
         function setTeacher(id) {
@@ -3658,12 +3663,7 @@
               ? student()
               : data.students.find((s) => s.id === shareStudentId);
             const card = owner?.cards.find((c) => c.id === presentationCardId);
-            const order =
-              owner?.progress.completedOrder ||
-              (owner?.progress.stage === 'reading'
-                ? owner.cards.map((c) => c.id)
-                : owner?.progress.order) ||
-              [];
+            const order = presentationOrder(owner);
             const position = order.indexOf(presentationCardId);
             if (card)
               html +=
@@ -4073,11 +4073,7 @@
             const owner = waiting()
               ? student()
               : data.students.find((s) => s.id === shareStudentId);
-            const order =
-              owner.progress.completedOrder ||
-              (owner.progress.stage === 'reading'
-                ? owner.cards.map((c) => c.id)
-                : owner.progress.order);
+            const order = presentationOrder(owner);
             const next =
               order.indexOf(presentationCardId) + (action === 'presentation-next' ? 1 : -1);
             if (next < 0 || next >= order.length) return;
